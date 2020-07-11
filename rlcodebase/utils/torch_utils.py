@@ -16,3 +16,6 @@ def tensor(x):
     x = torch.from_numpy(x).to(Config.DEVICE)
     return x
 
+def set_random_seed(seed):
+    np.random.seed(seed)
+    torch.manual_seed(seed)

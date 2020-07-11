@@ -1,0 +1,5 @@
+matplotlib
+atari-py
+Box2D
+pybullet
+git+git://github.com/openai/baselines.git@ea25b9e#egg=baselines

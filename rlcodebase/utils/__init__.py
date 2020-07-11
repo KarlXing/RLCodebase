@@ -1,3 +1,4 @@
 from .config import *
-from .distributions import *
+from .distribution import *
 from .replay import *
+from .torch_utils import *
