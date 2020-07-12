@@ -6,7 +6,7 @@ class BasePolicy():
         self.model = model
         if config.optimizer == 'RMSprop':
             self.optimizer = torch.optim.RMSprop(self.model.parameters(), lr=config.lr)
-        else if config.optimizer == 'Adam':
+        elif config.optimizer == 'Adam':
             self.optimizer = torch.optim.Adam(self.model.parameters(), lr=config.lr)
         else:
             raise NotImplementedError("Only RMSprop and Adam are supported. Please implement here for other optimizers.")

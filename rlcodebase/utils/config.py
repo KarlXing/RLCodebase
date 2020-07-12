@@ -29,7 +29,7 @@ class ActorCriticConfig(CommonConfig):
 
 class PPOConfig(ActorCriticConfig):
     def __init__(self):
-        super().__init()
-        self.ppo_clip_params = 0.2
+        super().__init__()
+        self.ppo_clip_param = 0.2
         self.ppo_epoch = 10
         self.mini_batch_size = 32

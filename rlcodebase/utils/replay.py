@@ -31,7 +31,7 @@ class Storage:
         setattr(self, 'adv', [None] * self.size)
         returns = next_value
         for i in reversed(range(self.size)):
-            returns = self.r[i] + discount * storage.m[i] * returns
-            advantages = returns - storage.v[i]
-            storage.ret[i] = returns
-            storage.adv[i] = advantages
+            returns = self.r[i] + discount * self.m[i] * returns
+            advantages = returns - self.v[i]
+            self.ret[i] = returns
+            self.adv[i] = advantages

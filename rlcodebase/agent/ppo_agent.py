@@ -7,10 +7,11 @@ from ..utils.torch_utils import tensor
 from ..policy.ppo_policy import PPOPolicy
 
 class PPOAgent(BaseAgent):
-    def __init__(self, env, model, config):
-        super().__init__(env, policy, config)
+    def __init__(self, env, config, model):
+        super().__init__(env, config)
         self.policy = PPOPolicy(model, config)
         self.storage = Storage(config.rollout_length)
+        self.num_workers = config.num_workers
         self.rollout_length = config.rollout_length
         self.rollout_filled = 0
         self.ppo_epoch = config.ppo_epoch
@@ -23,7 +24,7 @@ class PPOAgent(BaseAgent):
         with torch.no_grad():
             action, log_prob, v, ent = self.policy.compute_actions(self.state)
         next_state, rwd, done, info = self.env.step(action)
-        self.state = next_state
+        self.state = tensor(next_state)
         self.rollout_filled += 1
         self.storage.add({'a': action,
                           'log_prob': log_prob,
@@ -33,7 +34,7 @@ class PPOAgent(BaseAgent):
 
         if self.rollout_filled == self.rollout_length:
             with torch.no_grad():
-                _, _, v = self.policy.compute_actions(self.state)
+                _, _, v, _ = self.policy.compute_actions(self.state)
                 self.storage.compute_returns(v, self.config.discount)
                 self.storage.after_fill(self.sample_keys)
 
@@ -55,7 +56,7 @@ class PPOAgent(BaseAgent):
     def sample(self, indices):
         batch = {}
         for k in self.sample_keys:
-            batch[k] = self.storage.k[indices]
+            batch[k] = getattr(self.storage, k)[indices]
         return batch
 
 

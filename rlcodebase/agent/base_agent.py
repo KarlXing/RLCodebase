@@ -1,16 +1,18 @@
 import torch
 from ..utils.replay import *
+from ..utils.torch_utils import *
 
 class BaseAgent():
-    def __init__(self, env, model, config):
+    def __init__(self, env, config):
+        # general attributes for agents
         self.env = env
-        self.policy = None
-        self.storage = None
+        self.config = config
         self.max_steps = config.max_steps
         self.done_steps = 0
-        self.state = self.env.reset()
+        self.state = tensor(self.env.reset())
         self.sample_keys = []
-        self.config = config
+        self.policy = None
+        self.storage = None
 
     def run(self):
         while self.done_steps < self.max_steps:
