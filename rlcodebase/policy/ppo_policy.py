@@ -31,7 +31,3 @@ class PPOPolicy(BasePolicy):
         self.optimizer.step()
 
         return action_loss.item(), value_loss.item(), entropy.item()
-
-
-
-

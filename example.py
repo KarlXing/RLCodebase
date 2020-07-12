@@ -2,26 +2,27 @@ import rlcodebase
 from rlcodebase.env.envs import make_vec_envs
 from rlcodebase.agent.ppo_agent import PPOAgent
 from rlcodebase.utils.config import PPOConfig
+from rlcodebase.utils import get_action_dim
 from rlcodebase.model.model import CategoricalActorCriticNet
+from torch.utils.tensorboard import SummaryWriter
 
 def main():
-    model = CategoricalActorCriticNet(input_channels = 1, action_space = 4)
-    game = 'BreakoutNoFrameskip-v4'
-    env = make_vec_envs(game, num_workers = 3, seed = 1)
-
     config = PPOConfig()
-    config.rollout_length = 10
+    config.rollout_length = 16
     config.discount = 0.99
-    config.max_steps = 100
-    config.num_workers = 3
+    config.max_steps = int(1e4)
+    config.num_workers = 4
     config.mini_batch_size = 10
     config.max_grad_norm = 0.5
+    config.log_path = './runs/'
+    config.game = 'BreakoutNoFrameskip-v4'
 
-    agent = PPOAgent(env, config, model)
-    for i in range(10):
-        agent.step()
+    env = make_vec_envs(config.game, num_workers = config.num_workers, seed = config.seed)
+    model = CategoricalActorCriticNet(input_channels = env.observation_space.shape[0], action_dim = get_action_dim(env.action_space))
+    writer = SummaryWriter(config.log_path)
+
+    agent = PPOAgent(config, env, model, writer)
+    agent.run()
 
 if __name__ == '__main__':
     main()
-
-

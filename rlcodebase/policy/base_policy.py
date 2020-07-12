@@ -2,7 +2,6 @@ import torch
 
 class BasePolicy():
     def __init__(self, model, config):
-        self.config = config
         self.model = model
         if config.optimizer == 'RMSprop':
             self.optimizer = torch.optim.RMSprop(self.model.parameters(), lr=config.lr)

@@ -3,7 +3,8 @@ import numpy as np
 import random
 
 
-class Storage:
+# Rollout for actor-critic methods
+class Rollout:
     def __init__(self, size, keys=None):
         if keys is None:
             keys = []

@@ -4,16 +4,22 @@ import argparse
 class CommonConfig:
     DEVICE = torch.device('cpu')
     def __init__(self):
+        # Common config for algorithms
         self.optimizer = "RMSprop"
         self.lr = 0.0007
-        self.discount = None
-        self.gradient_clip = None
+        self.discount = 0.99
+        self.gradient_clip = 0.5
         self.use_gae = False
-        self.max_steps = 0
-        self.rollout_length = None
-        self.log_interval = int(1e3)
-        self.save_interval = 0
-        self.max_grad_norm = None
+        self.max_steps = int(10e5)
+        self.max_grad_norm = 0.5
+
+        # Common config for simulation
+        self.save_interval = int(1e5)
+        self.save_path = './'
+        self.log_interval = int(1e4)
+        self.log_path = './'
+        self.num_workers = 1
+        self.seed = 1
 
     def update(self, custom_args):
         for arg in vars(custom_args):
@@ -25,7 +31,7 @@ class ActorCriticConfig(CommonConfig):
         super().__init__()
         self.entropy_coef = 0.01
         self.value_loss_coef = 0.01
-        self.num_workers = 1
+        self.rollout_length = 32
 
 class PPOConfig(ActorCriticConfig):
     def __init__(self):
