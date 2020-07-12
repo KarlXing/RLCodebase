@@ -28,12 +28,11 @@ class BaseAgent():
         while self.done_steps < self.max_steps:
             self.step()
             self.done_steps += self.num_workers
-            print("Done Steps: ", self.done_steps)
-
             if (self.done_steps) % self.save_interval == 0:
                 self.save()
 
             if (self.done_steps) % self.log_interval == 0:
+                print("Done steps: ", self.done_steps)
                 print("Average Last Rewards is: ", 'None' if len(self.last_rewards) == 0 else np.mean(self.last_rewards))
 
     def step(self):

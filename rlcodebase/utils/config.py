@@ -8,7 +8,6 @@ class CommonConfig:
         self.optimizer = "RMSprop"
         self.lr = 0.0007
         self.discount = 0.99
-        self.gradient_clip = 0.5
         self.use_gae = False
         self.max_steps = int(10e5)
         self.max_grad_norm = 0.5
@@ -39,3 +38,7 @@ class PPOConfig(ActorCriticConfig):
         self.ppo_clip_param = 0.2
         self.ppo_epoch = 10
         self.mini_batch_size = 32
+
+class A2CConfig(ActorCriticConfig):
+    def __init__(self):
+        super().__init__()

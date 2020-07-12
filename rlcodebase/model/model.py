@@ -6,7 +6,7 @@ from torch.distributions import Categorical
 class CategoricalActorCriticNet(nn.Module):
     def __init__(self, input_channels, action_dim,  hidden_size = 512, flatten_size = 32*7*7):
         super(CategoricalActorCriticNet, self).__init__()
-        self.main = ConvBody(hidden_size = hidden_size, flatten_size = flatten_size)
+        self.main = ConvBody(input_channels = input_channels, hidden_size = hidden_size, flatten_size = flatten_size)
         self.actor = nn.Sequential(nn.Linear(hidden_size, action_dim))
         self.critic = nn.Sequential(nn.Linear(hidden_size, 1))
 

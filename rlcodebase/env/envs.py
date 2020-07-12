@@ -10,7 +10,7 @@ from baselines.common.atari_wrappers import make_atari, wrap_deepmind
 from baselines.common.vec_env import VecEnvWrapper
 from baselines.common.vec_env.dummy_vec_env import DummyVecEnv
 from baselines.common.vec_env.shmem_vec_env import ShmemVecEnv
-from baselines.common.vec_env.vec_frame_stack import VecFrameStack
+from baselines.common.vec_env import VecEnvWrapper
 
 from ..utils import *
 
@@ -86,3 +86,37 @@ class TransposeImage(gym.ObservationWrapper):
     def observation(self, observation):
         return observation.transpose(2, 0, 1)
 
+
+class VecFrameStack(VecEnvWrapper):
+    def __init__(self, venv, nstack):
+        self.venv = venv
+        self.nstack = nstack
+
+        wos = venv.observation_space  # wrapped ob space
+        self.shape_dim0 = wos.shape[0]
+
+        low = np.repeat(wos.low, self.nstack, axis=0)
+        high = np.repeat(wos.high, self.nstack, axis=0)
+
+        self.stackedobs = np.zeros((venv.num_envs,) + low.shape, low.dtype)
+
+        observation_space = gym.spaces.Box(low=low, high=high, dtype=venv.observation_space.dtype)
+        VecEnvWrapper.__init__(self, venv, observation_space=observation_space)
+
+    def step_wait(self):
+        obs, rews, news, infos = self.venv.step_wait()
+        self.stackedobs[:, :-self.shape_dim0] = self.stackedobs[:, self.shape_dim0:]
+        for (i, new) in enumerate(news):
+            if new:
+                self.stackedobs[i] = 0
+        self.stackedobs[:, -self.shape_dim0:] = obs
+        return self.stackedobs, rews, news, infos
+
+    def reset(self):
+        obs = self.venv.reset()
+        self.stackedobs[...] = 0
+        self.stackedobs[:, -self.shape_dim0:] = obs
+        return self.stackedobs
+
+    def close(self):
+        self.venv.close()

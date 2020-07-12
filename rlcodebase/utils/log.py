@@ -4,11 +4,11 @@ from collections import deque
 def log_rewards(writer, infos, done_steps, queue = None):
     if writer is None:
         return
-    for i in range(len(infos)):
-        if infos[i]['episodic_return'] is not None:
-            writer.add_scalar('episodic_return', infos[i]['episodic_return'], done_steps+i)
-            if queue:
-                queue.append(infos[i]['episodic_return'])
+    for (i, info) in enumerate(infos):
+        if info['episodic_return'] is not None:
+            writer.add_scalar('episodic_return', info['episodic_return'], done_steps+i)
+            if queue is not None:
+                queue.append(info['episodic_return'])
 
 class MultiDeque:
     def __init__(self, tags = None):
