@@ -17,7 +17,7 @@ class CategoricalActorCriticNet(nn.Module):
         if action is None:
             action = self.dist.sample()
         action_log_prob = self.dist.log_prob(action)
-        entropy = self.dist.entropy().sum(-1)
+        entropy = self.dist.entropy()
         value = self.critic(features)
 
         return action, action_log_prob, value.squeeze(-1), entropy

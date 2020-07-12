@@ -23,11 +23,11 @@ class PPOPolicy(BasePolicy):
                                     1.0 + self.ppo_clip_param) * advantages
         action_loss = -torch.min(surr1, surr2).mean()
         value_loss = 0.5 * (returns - values).pow(2).mean()
-        loss = action_loss + self.value_loss_coef * value_loss - self.entropy_coef * entropy
+        loss = action_loss + self.value_loss_coef * value_loss - self.entropy_coef * entropy.mean()
 
         self.optimizer.zero_grad()
         loss.backward()
         nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
         self.optimizer.step()
 
-        return action_loss.item(), value_loss.item(), entropy.item()
+        return action_loss.item(), value_loss.item(), entropy.mean().item()
