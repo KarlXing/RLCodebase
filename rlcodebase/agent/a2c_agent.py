@@ -37,7 +37,7 @@ class A2CAgent(BaseAgent):
                 self.storage.compute_returns(v, self.discount)
                 self.storage.after_fill(self.sample_keys)
 
-            indices = list(range(self.rollout_length))
+            indices = list(range(self.rollout_length*self.num_workers))
             batch = self.sample(indices)
             loss = self.policy.learn_on_batch(batch)
             self.writer.add_scalar('action_loss', loss[0], self.done_steps)

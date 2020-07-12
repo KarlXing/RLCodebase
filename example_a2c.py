@@ -16,7 +16,7 @@ def main():
     config.num_frame_stack = 4
     config.log_interval = int(1e3)
     config.lr = 1e-4
-    config.log_path = '/runs/A2C-BreakoutNoFrameskip-v4/'
+    config.log_path = './runs/A2C-BreakoutNoFrameskip-v4/'
     config.game = 'BreakoutNoFrameskip-v4'
     select_device(0)
 
