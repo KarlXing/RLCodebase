@@ -29,7 +29,7 @@ def main():
     model = CategoricalActorCriticNet(input_channels = env.observation_space.shape[0], action_dim = get_action_dim(env.action_space)).to(CommonConfig.DEVICE)
     writer = SummaryWriter(config.log_path)
 
-    agent = A2CAgent(config, env, model, writer)
+    agent = PPOAgent(config, env, model, writer)
     agent.run()
 
 if __name__ == '__main__':
