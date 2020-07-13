@@ -10,8 +10,8 @@ def main():
     config = PPOConfig()
     config.rollout_length = 128
     config.discount = 0.99
-    config.max_steps = int(1e4)
-    config.num_workers = 4
+    config.max_steps = int(2e7)
+    config.num_workers = 8
     config.max_grad_norm = 0.5
     config.ppo_epoch = 4
     config.mini_batch_size = config.rollout_length * config.num_workers // 4

@@ -10,7 +10,7 @@ def main():
     config = A2CConfig()
     config.rollout_length = 5
     config.discount = 0.99
-    config.max_steps = int(1e4)
+    config.max_steps = int(2e7)
     config.num_workers = 16
     config.max_grad_norm = 5
     config.num_frame_stack = 4
