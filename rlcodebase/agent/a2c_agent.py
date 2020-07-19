@@ -18,24 +18,23 @@ class A2CAgent(BaseAgent):
         self.rollout_filled = 0
 
     def step(self):
-        self.storage.add({'s': tensor(self.state)})
-
         with torch.no_grad():
             action, log_prob, v, ent = self.policy.compute_actions(self.state)
-        next_state, rwd, done, info = self.env.step(action.cpu())
-        self.state = tensor(next_state)
+        next_state, rwd, done, info = self.env.step(action.cpu().numpy())
         self.rollout_filled += 1
         self.storage.add({'a': action,
                           'v': v, 
                           'r': tensor(rwd),
-                          'm': tensor(1-done)})
+                          'm': tensor(1-done),
+                          's': self.state})
         log_rewards(self.writer, info, self.done_steps, self.last_rewards)
+        self.state = tensor(next_state)
 
         if self.rollout_filled == self.rollout_length:
             with torch.no_grad():
                 _, _, v, _ = self.policy.compute_actions(self.state)
-                self.storage.compute_returns(v, self.discount)
-                self.storage.after_fill(self.sample_keys)
+            self.storage.compute_returns(v, self.discount)
+            self.storage.after_fill(self.sample_keys)
 
             indices = list(range(self.rollout_length*self.num_workers))
             batch = self.sample(indices)

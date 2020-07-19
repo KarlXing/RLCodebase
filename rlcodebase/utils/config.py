@@ -29,7 +29,7 @@ class ActorCriticConfig(CommonConfig):
     def __init__(self):
         super().__init__()
         self.entropy_coef = 0.01
-        self.value_loss_coef = 0.01
+        self.value_loss_coef = 0.5
         self.rollout_length = 32
 
 class PPOConfig(ActorCriticConfig):
