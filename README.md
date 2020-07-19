@@ -29,9 +29,21 @@ pip install -r requirements.txt
 python example_a2c.py
 ````
 
+## Citation
+Please use the bibtex below if you want to cite this repository in your publications:
+````
+@misc{pytorchrl,
+  author = {Jinwei Xing},
+  title = {PyTorch Codebase For Deep Reinforcement Learning Algorithms},
+  year = {2020},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  howpublished = {\url{https://github.com/KarlXing/RLCodebase}},
+}
+````
 
 
-# References for implementation and design
+## References for implementation and design
 The design and some parts of implementation of this repo is referred from resources below.
 * https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail
 * https://github.com/ShangtongZhang/DeepRL
