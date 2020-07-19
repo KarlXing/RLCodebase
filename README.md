@@ -32,7 +32,7 @@ python example_a2c.py
 ## Citation
 Please use the bibtex below if you want to cite this repository in your publications:
 ````
-@misc{pytorchrl,
+@misc{rlcodebase,
   author = {Jinwei Xing},
   title = {PyTorch Codebase For Deep Reinforcement Learning Algorithms},
   year = {2020},
