@@ -25,7 +25,7 @@ class PPOAgent(BaseAgent):
 
         with torch.no_grad():
             action, log_prob, v, ent = self.policy.compute_actions(self.state)
-        next_state, rwd, done, info = self.env.step(action.cpu())
+        next_state, rwd, done, info = self.env.step(action.cpu().numpy())
         self.state = tensor(next_state)
         self.rollout_filled += 1
         self.storage.add({'a': action,
@@ -40,6 +40,7 @@ class PPOAgent(BaseAgent):
                 _, _, v, _ = self.policy.compute_actions(self.state)
                 self.storage.compute_returns(v, self.discount)
                 self.storage.after_fill(self.sample_keys)
+                self.storage.norm_adv()
 
             mqueue = MultiDeque(tags = ['action_loss', 'value_loss', 'entropy'])
             for i_epoch in range(self.ppo_epoch):

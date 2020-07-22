@@ -36,3 +36,6 @@ class Rollout:
             advantages = returns - self.v[i]
             self.ret[i] = returns
             self.adv[i] = advantages
+
+    def norm_adv(self):
+        self.adv = (self.adv - self.adv.mean())/self.adv.std()
