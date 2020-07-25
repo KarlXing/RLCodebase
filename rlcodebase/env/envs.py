@@ -41,8 +41,8 @@ def make_env(env_id, seed, rank, custom_wrapper=None):
     return _thunk
 
 
-def make_vec_envs(env_name, num_workers, seed=1, num_frame_stack=1):
-    envs = [make_env(env_name, seed, i) for i in range(num_workers)]
+def make_vec_envs(env_name, num_envs, seed=1, num_frame_stack=1):
+    envs = [make_env(env_name, seed, i) for i in range(num_envs)]
 
     if len(envs) > 1:
         envs = ShmemVecEnv(envs, context='fork')

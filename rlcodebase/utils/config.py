@@ -1,44 +1,124 @@
-import torch
 import argparse
+import torch
+import time
+import os
 
-class CommonConfig:
-    DEVICE = torch.device('cpu')
-    def __init__(self):
-        # Common config for algorithms
-        self.optimizer = "RMSprop"
-        self.lr = 0.0007
-        self.discount = 0.99
-        self.use_gae = False
-        self.max_steps = int(10e5)
-        self.max_grad_norm = 0.5
+class Config:
+    def __init__(self, args):
+        for k,v in vars(args).items():
+            setattr(self, k, v)
 
-        # Common config for simulation
-        self.save_interval = int(1e5)
-        self.save_path = './'
-        self.log_interval = int(1e4)
-        self.log_path = './'
-        self.num_workers = 1
-        self.seed = 1
+        self.general_rl_config = ['algo', 'game', 'max_steps', 'num_envs', 'num_frame_stack', 'optimizer', 'discount', 
+                                  'use_gae', 'gae_lambda', 'use_grad_clip', 'max_grad_norm']
+        self.general_exp_config = ['echo_interval', 'num_echo_episodes', 'save_interval', 'save_path', 'use_gpu', 'device', 'seed', 'eval']
 
-    def update(self, custom_args):
-        for arg in vars(custom_args):
-            assert(hasattr(self, arg))
-            setattr(self, arg, getattr(args, arg))
+        temp_config = ['value_loss_coef', 'entropy_coef', 'rollout_length', 'ppo_epoch', 'ppo_clip_param', 'num_mini_batch']
+        self.ppo = self.general_rl_config + temp_config + self.general_exp_config
 
-class ActorCriticConfig(CommonConfig):
-    def __init__(self):
-        super().__init__()
-        self.entropy_coef = 0.01
-        self.value_loss_coef = 0.5
-        self.rollout_length = 32
+        temp_config = ['value_loss_coef', 'entropy_coef', 'rollout_length']
+        self.a2c = self.general_rl_config + temp_config + self.general_exp_config
 
-class PPOConfig(ActorCriticConfig):
-    def __init__(self):
-        super().__init__()
-        self.ppo_clip_param = 0.2
-        self.ppo_epoch = 10
-        self.mini_batch_size = 32
+    # for print
+    def __str__(self):
+        result = ''
+        for k in getattr(self, self.algo):
+            result += '%s: %s\n' %  (k, str(getattr(self, k)))
+        return result
 
-class A2CConfig(ActorCriticConfig):
-    def __init__(self):
-        super().__init__()
+
+
+def init_config():
+    parser = argparse.ArgumentParser()
+    # General RL parameters
+    parser.add_argument('--algo',
+                        default='a2c', type=str,
+                        help='type of reinforcement learning algorithm; support a2c and ppo for now')
+    parser.add_argument('--game',
+                        default='BreakoutNoFrameskip-v4', type=str,
+                        help='name of game')
+    parser.add_argument('--max-steps',
+                        default=int(1e7), type=int,
+                        help='total number of steps to run')
+    parser.add_argument('--num-envs',
+                        default=16, type=int,
+                        help='number of parallel environments')
+    parser.add_argument('--num-frame-stack',
+                        default=1, type=int,
+                        help='number of frames stack')
+    parser.add_argument('--optimizer', 
+                        default='RMSprop', type=str,
+                        help='Optimizer: RMSprop | Adam')
+    parser.add_argument('--lr',
+                        default=0.0007, type=float,
+                        help='learning rate')
+    parser.add_argument('--discount',
+                        default=0.99, type=float,
+                        help='discount factor for rewards')
+    parser.add_argument('--use-gae',
+                        default=False, action='store_true',
+                        help='use generalized advantage estimation or not'
+                        )
+    parser.add_argument('--gae-lambda',
+                        default=0.95, type=float,
+                        help='lambda parameter used in GAE')
+    parser.add_argument('--use-grad-clip',
+                        default=False, action='store_true',
+                        help='clip gradients or not')
+    parser.add_argument('--max-grad-norm',
+                        default=0.5, type=float,
+                        help='max norm of gradients')
+
+    # Actor-Critic RL parameters
+    parser.add_argument('--value-loss-coef',
+                        default=0.5, type=float,
+                        help='coefficient of value loss')
+    parser.add_argument('--entropy-coef',
+                        default=0.01, type=float,
+                        help='coefficient of entropy loss')
+    parser.add_argument('--rollout-length',
+                        default=5, type=int,
+                        help='number of steps in one forward computation')
+    parser.add_argument('--ppo-clip-param',
+                        default=0.1, type=float,
+                        help='PPO: clip parameter')
+    parser.add_argument('--ppo-epoch',
+                        default=4, type=int,
+                        help='PPO: number of epochs')
+    parser.add_argument('--num-mini-batch',
+                        default=4, type=int,
+                        help='PPO: number of mini batches in each epco, mini_batch_size = num_envs * rollout_length / num_mini_batch')
+
+    # General Computation Config
+    parser.add_argument('--echo-interval',
+                        default=int(1e4), type=int,
+                        help='the interval of printing average episodic return of recent episodes, set as 0 to avoid printing')
+    parser.add_argument('--num-echo-episodes',
+                        default=20, type=int,
+                        help='the number of recent episodes whose episodic return will be averaged and then printed')
+    parser.add_argument('--save-interval',
+                        default=int(1e5), type=int,
+                        help='number of steps between two saving')
+    parser.add_argument('--save-path',
+                        default=None, type=str,
+                        help='directory to save models and also the logs')
+    parser.add_argument('--use-gpu',
+                        default=False, action='store_true',
+                        help='use gpu or cpu')
+    parser.add_argument('--seed',
+                        default=1, type=int,
+                        help='random seed for numpy and torch')
+    parser.add_argument('--eval',
+                        default=False, action='store_true',
+                        help='evaluate the model without training')
+
+    args = parser.parse_args()
+    args.device = torch.device('cuda') if args.use_gpu and torch.cuda.is_available() else torch.device('cpu')
+    
+    if args.save_path is None:
+        args.save_path = os.path.join('./runs', '%s-%s-%s' % (args.algo, args.game, time.time()))
+    if not os.path.exists(args.save_path):
+        os.makedirs(args.save_path)
+
+    config = Config(args)
+
+    return config

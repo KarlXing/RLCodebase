@@ -3,7 +3,7 @@ import numpy as np
 import random
 
 
-# Rollout for actor-critic methods
+# Rollout for actor-critic algos
 class Rollout:
     def __init__(self, size, keys=None):
         if keys is None:

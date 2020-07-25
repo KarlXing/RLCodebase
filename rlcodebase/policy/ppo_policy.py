@@ -4,15 +4,24 @@ from .base_policy import BasePolicy
 
 
 class PPOPolicy(BasePolicy):
-    def __init__(self, model, config):
-        super().__init__(model, config)
-        self.ppo_clip_param = config.ppo_clip_param
-        self.entropy_coef = config.entropy_coef
-        self.value_loss_coef = config.value_loss_coef
-        self.max_grad_norm = config.max_grad_norm
+    def __init__(self, model,
+                       optimizer,
+                       lr,
+                       value_loss_coef,
+                       entropy_coef,
+                       ppo_clip_param,
+                       use_grad_clip = False,
+                       max_grad_norm = None):
+        super().__init__(model, optimizer, lr)
+        self.value_loss_coef = value_loss_coef
+        self.entropy_coef = entropy_coef
+        self.ppo_clip_param = ppo_clip_param
+        self.use_grad_clip = use_grad_clip
+        self.max_grad_norm = max_grad_norm
 
     def compute_actions(self, obs):
-        return self.model(obs)
+        result = self.model(obs)
+        return result
 
     def learn_on_batch(self, batch):
         state, action, log_prob_old, returns, advantages = batch['s'], batch['a'], batch['log_prob'], batch['ret'], batch['adv']
@@ -27,7 +36,8 @@ class PPOPolicy(BasePolicy):
 
         self.optimizer.zero_grad()
         loss.backward()
-        nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
+        if self.use_grad_clip:
+            nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
         self.optimizer.step()
 
         return action_loss.item(), value_loss.item(), entropy.mean().item()

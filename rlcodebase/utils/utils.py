@@ -2,21 +2,13 @@ import torch
 import numpy as np
 from gym.spaces.box import Box
 from gym.spaces.discrete import Discrete
-from .config import *
 
 
-def select_device(gpu_id):
-    if torch.cuda.is_available() and gpu_id >= 0:
-        CommonConfig.DEVICE = torch.device('cuda:%d' % (gpu_id))
-    else:
-        CommonConfig.DEVICE = torch.device('cpu')
-
-
-def tensor(x):
+def tensor(x, device):
     if isinstance(x, torch.Tensor):
         return x
     x = np.asarray(x, dtype=np.float32)
-    x = torch.from_numpy(x).to(CommonConfig.DEVICE)
+    x = torch.from_numpy(x).to(device)
     return x
 
 

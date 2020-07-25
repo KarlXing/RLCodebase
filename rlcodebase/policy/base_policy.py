@@ -1,12 +1,12 @@
 import torch
 
 class BasePolicy():
-    def __init__(self, model, config):
+    def __init__(self, model, optimizer, lr):
         self.model = model
-        if config.optimizer == 'RMSprop':
-            self.optimizer = torch.optim.RMSprop(self.model.parameters(), lr=config.lr)
-        elif config.optimizer == 'Adam':
-            self.optimizer = torch.optim.Adam(self.model.parameters(), lr=config.lr)
+        if optimizer == 'RMSprop':
+            self.optimizer = torch.optim.RMSprop(self.model.parameters(), lr=lr)
+        elif optimizer == 'Adam':
+            self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
         else:
             raise NotImplementedError("Only RMSprop and Adam are supported. Please implement here for other optimizers.")
 

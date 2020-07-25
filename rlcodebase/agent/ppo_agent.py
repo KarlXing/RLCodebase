@@ -2,63 +2,68 @@ import torch
 from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
 import os
 from .base_agent import BaseAgent
-from ..utils.replay import Rollout
-from ..utils.utils import tensor
-from ..utils.log import log_rewards, MultiDeque
-from ..policy.ppo_policy import PPOPolicy
+from ..utils import Rollout
+from ..utils import tensor, MultiDeque
+from ..policy import PPOPolicy
 
 class PPOAgent(BaseAgent):
     def __init__(self, config, env, model, writer = None):
         super().__init__(config, env, writer)
-        self.policy = PPOPolicy(model, config)
+        self.policy = PPOPolicy(model,
+                                config.optimizer,
+                                config.lr,
+                                config.value_loss_coef,
+                                config.entropy_coef,
+                                config.ppo_clip_param,
+                                config.use_grad_clip,
+                                config.max_grad_norm)
         self.storage = Rollout(config.rollout_length)
-
-        self.rollout_length = config.rollout_length
-        self.ppo_epoch = config.ppo_epoch
-        self.mini_batch_size = config.mini_batch_size
-
         self.sample_keys = ['s', 'a', 'log_prob', 'ret', 'adv']
         self.rollout_filled = 0
+        self.mini_batch_size = config.rollout_length * config.num_envs // config.num_mini_batch
+
 
     def step(self):
-        self.storage.add({'s': tensor(self.state)})
-
         with torch.no_grad():
             action, log_prob, v, ent = self.policy.compute_actions(self.state)
         next_state, rwd, done, info = self.env.step(action.cpu().numpy())
-        self.state = tensor(next_state)
         self.rollout_filled += 1
         self.storage.add({'a': action,
                           'log_prob': log_prob,
                           'v': v, 
-                          'r': tensor(rwd),
-                          'm': tensor(1-done)})
-        log_rewards(self.writer, info, self.done_steps, self.last_rewards)
+                          'r': tensor(rwd, self.config.device),
+                          'm': tensor(1-done, self.config.device),
+                          's': self.state})
+        self.logger.save_episodic_return(info, self.done_steps)
 
-        if self.rollout_filled == self.rollout_length:
-            with torch.no_grad():
-                _, _, v, _ = self.policy.compute_actions(self.state)
-                self.storage.compute_returns(v, self.discount)
-                self.storage.after_fill(self.sample_keys)
-                self.storage.norm_adv()
+        self.state = tensor(next_state, self.config.device)
 
-            mqueue = MultiDeque(tags = ['action_loss', 'value_loss', 'entropy'])
-            for i_epoch in range(self.ppo_epoch):
-                sampler = BatchSampler(SubsetRandomSampler(range(self.rollout_length * self.num_workers)), 
-                                       self.mini_batch_size, 
-                                       drop_last=True)
-                for indices in sampler:
-                    batch = self.sample(indices)
-                    loss = self.policy.learn_on_batch(batch)
-                    mqueue.add(loss)
-            mqueue.write(self.writer, self.done_steps)
+
+        if self.rollout_filled == self.config.rollout_length:
+            if not self.config.eval:
+                with torch.no_grad():
+                    _, _, v, _ = self.policy.compute_actions(self.state)
+                    self.storage.compute_returns(v, self.config.discount)
+                    self.storage.after_fill(self.sample_keys)
+                    self.storage.norm_adv() 
+
+                mqueue = MultiDeque(tags = ['action_loss', 'value_loss', 'entropy'])
+                for i_epoch in range(self.config.ppo_epoch):
+                    sampler = BatchSampler(SubsetRandomSampler(range(self.config.rollout_length * self.config.num_envs)), 
+                                           self.mini_batch_size, 
+                                           drop_last=True)
+                    for indices in sampler:
+                        batch = self.sample(indices)
+                        loss = self.policy.learn_on_batch(batch)
+                        mqueue.add(loss)
+                self.logger.add_scalar(*mqueue.return_summary(), self.done_steps)
 
             self.rollout_filled = 0
             self.storage.reset()
 
 
     def save(self):
-        torch.save(self.policy.model.state_dict(), os.path.join(self.save_path, 'ppo_model.pt'))
+        torch.save(self.policy.model.state_dict(), os.path.join(self.config.save_path, 'model.pt'))
 
     def sample(self, indices):
         batch = {}
