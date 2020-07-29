@@ -4,13 +4,10 @@ import time
 import os
 
 class Config:
-    def __init__(self, args):
-        for k,v in vars(args).items():
-            setattr(self, k, v)
-
-        self.general_rl_config = ['algo', 'game', 'max_steps', 'num_envs', 'num_frame_stack', 'optimizer', 'discount', 
+    def __init__(self):
+        self.general_rl_config = ['algo', 'game', 'max_steps', 'num_envs', 'num_frame_stack', 'optimizer', 'lr', 'discount', 
                                   'use_gae', 'gae_lambda', 'use_grad_clip', 'max_grad_norm']
-        self.general_exp_config = ['echo_interval', 'num_echo_episodes', 'save_interval', 'save_path', 'use_gpu', 'device', 'seed', 'eval']
+        self.general_exp_config = ['echo_interval', 'num_echo_episodes', 'save_interval', 'save_path', 'use_gpu', 'seed', 'eval']
 
         temp_config = ['value_loss_coef', 'entropy_coef', 'rollout_length', 'ppo_epoch', 'ppo_clip_param', 'num_mini_batch']
         self.ppo = self.general_rl_config + temp_config + self.general_exp_config
@@ -18,16 +15,36 @@ class Config:
         temp_config = ['value_loss_coef', 'entropy_coef', 'rollout_length']
         self.a2c = self.general_rl_config + temp_config + self.general_exp_config
 
-    # for print
+        # set default attributes of config from default parser
+        default_parser = init_parser()
+        args = default_parser.parse_args([])
+        for k,v in vars(args).items():
+            setattr(self, k, v)
+
     def __str__(self):
         result = ''
         for k in getattr(self, self.algo):
             result += '%s: %s\n' %  (k, str(getattr(self, k)))
         return result
 
+    def after_set(self):
+        self.device = torch.device('cuda') if self.use_gpu and torch.cuda.is_available() else torch.device('cpu')
+    
+        if self.save_path == 'default':
+            self.save_path = os.path.join('./runs', '%s-%s-%s' % (self.algo, self.game, time.time()))
+        if not os.path.exists(self.save_path):
+            os.makedirs(self.save_path)
+
+        with open(os.path.join(self.save_path, 'config'), 'w') as f:
+            f.write(str(self))
+
+    # user could update config with parsed args
+    def update(self, args):
+        for k,v in vars(args).items():
+            setattr(self, k, v)
 
 
-def init_config():
+def init_parser():
     parser = argparse.ArgumentParser()
     # General RL parameters
     parser.add_argument('--algo',
@@ -88,7 +105,7 @@ def init_config():
                         default=4, type=int,
                         help='PPO: number of mini batches in each epco, mini_batch_size = num_envs * rollout_length / num_mini_batch')
 
-    # General Computation Config
+    # General Experiment Config
     parser.add_argument('--echo-interval',
                         default=int(1e4), type=int,
                         help='the interval of printing average episodic return of recent episodes, set as 0 to avoid printing')
@@ -99,7 +116,7 @@ def init_config():
                         default=int(1e5), type=int,
                         help='number of steps between two saving')
     parser.add_argument('--save-path',
-                        default=None, type=str,
+                        default='default', type=str,
                         help='directory to save models and also the logs')
     parser.add_argument('--use-gpu',
                         default=False, action='store_true',
@@ -111,14 +128,4 @@ def init_config():
                         default=False, action='store_true',
                         help='evaluate the model without training')
 
-    args = parser.parse_args()
-    args.device = torch.device('cuda') if args.use_gpu and torch.cuda.is_available() else torch.device('cpu')
-    
-    if args.save_path is None:
-        args.save_path = os.path.join('./runs', '%s-%s-%s' % (args.algo, args.game, time.time()))
-    if not os.path.exists(args.save_path):
-        os.makedirs(args.save_path)
-
-    config = Config(args)
-
-    return config
+    return parser
