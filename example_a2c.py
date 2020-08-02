@@ -11,11 +11,12 @@ def main():
     config.game = 'BreakoutNoFrameskip-v4'
     config.algo = 'a2c'
     config.max_steps = int(1e8)
-    config.num_envs = 32
+    config.num_envs = 16
     config.optimizer = 'RMSprop'
-    config.lr = 0.0005
+    config.lr = 0.0001
     config.discount = 0.99
-    config.use_gae = False
+    config.use_gae = True
+    config.gae_lambda = 0.95
     config.use_grad_clip = True
     config.max_grad_norm = 5
     config.rollout_length = 5
@@ -23,7 +24,7 @@ def main():
     config.entropy_coef = 0.01
     config.use_gpu = True
     config.seed = 1
-    config.num_frame_stack = 4
+    config.num_frame_stack = 1
     config.after_set()
     print(config)
 

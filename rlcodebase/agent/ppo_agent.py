@@ -26,7 +26,7 @@ class PPOAgent(BaseAgent):
     def step(self):
         with torch.no_grad():
             action, log_prob, v, ent = self.policy.compute_actions(self.state)
-        next_state, rwd, done, info = self.env.step(action.cpu().numpy())
+        next_state, rwd, done, info = self.env.step(action[0].cpu().numpy())
         self.rollout_filled += 1
         self.storage.add({'a': action,
                           'log_prob': log_prob,
@@ -43,7 +43,7 @@ class PPOAgent(BaseAgent):
             if not self.config.eval:
                 with torch.no_grad():
                     _, _, v, _ = self.policy.compute_actions(self.state)
-                    self.storage.compute_returns(v, self.config.discount)
+                    self.storage.compute_returns(v, self.config.discount, self.config.use_gae, self.config.gae_lambda)
                     self.storage.after_fill(self.sample_keys)
                     self.storage.norm_adv() 
 
