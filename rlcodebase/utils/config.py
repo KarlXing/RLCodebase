@@ -9,7 +9,7 @@ class Config:
                                   'use_gae', 'gae_lambda', 'use_grad_clip', 'max_grad_norm']
         self.general_exp_config = ['echo_interval', 'num_echo_episodes', 'save_interval', 'save_path', 'use_gpu', 'seed', 'eval']
 
-        temp_config = ['value_loss_coef', 'entropy_coef', 'rollout_length', 'ppo_epoch', 'ppo_clip_param', 'num_mini_batch']
+        temp_config = ['value_loss_coef', 'entropy_coef', 'rollout_length', 'ppo_epoch', 'ppo_clip_param', 'num_mini_batch', 'target_kl']
         self.ppo = self.general_rl_config + temp_config + self.general_exp_config
 
         temp_config = ['value_loss_coef', 'entropy_coef', 'rollout_length']
@@ -101,6 +101,9 @@ def init_parser():
     parser.add_argument('--ppo-epoch',
                         default=4, type=int,
                         help='PPO: number of epochs')
+    parser.add_argument('--target-kl',
+                        default=None, type=float,
+                        help='avoid training in PPO if kl divergence between the current dist and original dist goes beyond target_kl')
     parser.add_argument('--num-mini-batch',
                         default=4, type=int,
                         help='PPO: number of mini batches in each epco, mini_batch_size = num_envs * rollout_length / num_mini_batch')

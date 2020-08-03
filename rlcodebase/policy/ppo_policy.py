@@ -18,14 +18,17 @@ class PPOPolicy(BasePolicy):
         self.ppo_clip_param = ppo_clip_param
         self.use_grad_clip = use_grad_clip
         self.max_grad_norm = max_grad_norm
+        self.approx_kl = []
 
     def compute_actions(self, obs):
         result = self.model(obs)
         return result
 
-    def learn_on_batch(self, batch):
+    def learn_on_batch(self, batch, target_kl=None):
         state, action, log_prob_old, returns, advantages = batch['s'], batch['a'], batch['log_prob'], batch['ret'], batch['adv']
         _, log_prob, values, entropy = self.model(state, action)
+        self.approx_kl.append(torch.mean(log_prob_old - log_prob).detach().cpu().numpy())
+        
         ratio = torch.exp(log_prob - log_prob_old)
         surr1 = ratio * advantages
         surr2 = torch.clamp(ratio, 1.0 - self.ppo_clip_param,

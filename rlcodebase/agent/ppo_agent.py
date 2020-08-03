@@ -5,6 +5,7 @@ from .base_agent import BaseAgent
 from ..utils import Rollout
 from ..utils import tensor, MultiDeque
 from ..policy import PPOPolicy
+import numpy as np
 
 class PPOAgent(BaseAgent):
     def __init__(self, config, env, model, writer = None):
@@ -52,10 +53,13 @@ class PPOAgent(BaseAgent):
                     sampler = BatchSampler(SubsetRandomSampler(range(self.config.rollout_length * self.config.num_envs)), 
                                            self.mini_batch_size, 
                                            drop_last=True)
+                    self.policy.approx_kl = []
                     for indices in sampler:
                         batch = self.sample(indices)
                         loss = self.policy.learn_on_batch(batch)
                         mqueue.add(loss)
+                    if self.config.target_kl is not None and np.mean(self.policy.approx_kl) > 1.5 * self.config.target_kl:
+                        break
                 self.logger.add_scalar(*mqueue.return_summary(), self.done_steps)
 
             self.rollout_filled = 0
