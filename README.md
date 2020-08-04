@@ -29,6 +29,14 @@ pip install -r requirements.txt
 python example_a2c.py
 ````
 
+## Results
+### Atari Games 
+<p float="left">
+  <img src="imgs/Seaquest.png" width="300" />
+  <img src="imgs/Breakout.png" width="300" /> 
+  <img src="imgs/Qbert.png" width="300" />
+</p>
+
 ## Citation
 Please use the bibtex below if you want to cite this repository in your publications:
 ````
