@@ -22,7 +22,7 @@ class A2CAgent(BaseAgent):
     def step(self):
         with torch.no_grad():
             action, log_prob, v, ent = self.policy.compute_actions(self.state)
-        next_state, rwd, done, info = self.env.step(action[0].cpu().numpy())
+        next_state, rwd, done, info = self.env.step(action.cpu().numpy())
         self.rollout_filled += 1
         self.storage.add({'a': action,
                           'v': v, 
