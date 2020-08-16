@@ -1,20 +1,15 @@
 import torch
-from ..utils.replay import *
-from ..utils.utils import *
 from collections import deque
+from ..utils.utils import *
 
 class BaseAgent():
-    def __init__(self, config, env, logger):
-        self.env = env
+    def __init__(self, config):
         self.config = config
-        self.logger = logger
-
         self.sample_keys = []
         self.policy = None
         self.storage = None
+        self.logger = None
         self.done_steps = 0
-        self.state = tensor(self.env.reset(), self.config.device)
-
 
     def run(self):
         while self.done_steps < self.config.max_steps:
@@ -32,4 +27,7 @@ class BaseAgent():
         raise NotImplementedError
 
     def save(self):
+        raise NotImplementedError
+
+    def sample(self, indices):
         raise NotImplementedError

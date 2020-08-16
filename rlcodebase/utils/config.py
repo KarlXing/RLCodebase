@@ -7,7 +7,7 @@ class Config:
     def __init__(self):
         self.general_rl_config = ['algo', 'game', 'max_steps', 'num_envs', 'num_frame_stack', 'optimizer', 'lr', 'discount', 
                                   'use_gae', 'gae_lambda', 'use_grad_clip', 'max_grad_norm']
-        self.general_exp_config = ['echo_interval', 'num_echo_episodes', 'save_interval', 'save_path', 'use_gpu', 'seed', 'eval']
+        self.general_exp_config = ['echo_interval', 'num_echo_episodes', 'save_interval', 'save_path', 'use_gpu', 'seed', 'eval', 'tag']
 
         temp_config = ['value_loss_coef', 'entropy_coef', 'rollout_length', 'ppo_epoch', 'ppo_clip_param', 'num_mini_batch', 'target_kl']
         self.ppo = self.general_rl_config + temp_config + self.general_exp_config
@@ -31,7 +31,10 @@ class Config:
         self.device = torch.device('cuda') if self.use_gpu and torch.cuda.is_available() else torch.device('cpu')
     
         if self.save_path == 'default':
-            self.save_path = os.path.join('./runs', '%s-%s-%s' % (self.algo, self.game, time.time()))
+            path = '%s-%s-%s' % (self.algo, self.game, time.time())
+            if self.tag:
+                path = '-'.join([path, self.tag])
+            self.save_path = os.path.join('./runs', path)
         if not os.path.exists(self.save_path):
             os.makedirs(self.save_path)
 
@@ -130,5 +133,8 @@ def init_parser():
     parser.add_argument('--eval',
                         default=False, action='store_true',
                         help='evaluate the model without training')
+    parser.add_argument('--tag',
+                        default=None, type=str,
+                        help='tag used in creating default save path; easier for user to distinguish saved results')
 
     return parser

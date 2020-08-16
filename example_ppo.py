@@ -2,13 +2,13 @@ import rlcodebase
 from rlcodebase.env import make_vec_envs
 from rlcodebase.agent import PPOAgent
 from rlcodebase.utils import get_action_dim, init_parser, Config, Logger
-from rlcodebase.model import CategoricalActorCriticConvNet
+from rlcodebase.model import CatACConvNet
 from torch.utils.tensorboard import SummaryWriter
 
 def main():
     # create config
     config = Config()
-    config.game = 'BreakoutNoFrameskip-v4'
+    config.game = 'SeaquestNoFrameskip-v4'
     config.algo = 'ppo'
     config.max_steps = int(1e8)
     config.num_envs = 8
@@ -27,7 +27,7 @@ def main():
     config.num_mini_batch = 4
     config.use_gpu = True
     config.seed = 1
-    config.num_frame_stack = 1
+    config.num_frame_stack = 4
     config.after_set()
     print(config)
 
@@ -40,7 +40,7 @@ def main():
 
     # prepare env, model and logger
     env = make_vec_envs(config.game, num_envs = config.num_envs, seed = config.seed, num_frame_stack= config.num_frame_stack)
-    model = CategoricalActorCriticConvNet(input_channels = env.observation_space.shape[0], action_dim = get_action_dim(env.action_space)).to(config.device)
+    model = CatACConvNet(input_channels = env.observation_space.shape[0], action_dim = get_action_dim(env.action_space)).to(config.device)
     logger =  Logger(SummaryWriter(config.save_path), config.num_echo_episodes)
 
     # create agent and run

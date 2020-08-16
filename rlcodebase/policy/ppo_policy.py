@@ -12,7 +12,15 @@ class PPOPolicy(BasePolicy):
                        ppo_clip_param,
                        use_grad_clip = False,
                        max_grad_norm = None):
-        super().__init__(model, optimizer, lr)
+        super().__init__()
+        self.model = model
+        if optimizer == 'RMSprop':
+            self.optimizer = torch.optim.RMSprop(model.parameters(), lr=lr)
+        elif optimizer == 'Adam':
+            self.optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+        else:
+            raise NotImplementedError("Only RMSprop and Adam are supported. Please implement here for other optimizers.")
+
         self.value_loss_coef = value_loss_coef
         self.entropy_coef = entropy_coef
         self.ppo_clip_param = ppo_clip_param
@@ -20,9 +28,9 @@ class PPOPolicy(BasePolicy):
         self.max_grad_norm = max_grad_norm
         self.approx_kl = []
 
-    def compute_actions(self, obs):
-        result = self.model(obs)
-        return result
+    def inference(self, obs):
+        action, action_log_prob, value, entropy = self.model(obs)
+        return action, action_log_prob, value, entropy
 
     def learn_on_batch(self, batch, target_kl=None):
         state, action, log_prob_old, returns, advantages = batch['s'], batch['a'], batch['log_prob'], batch['ret'], batch['adv']
