@@ -21,6 +21,10 @@ class BaseAgent():
             if self.config.echo_interval != 0 and self.done_steps % self.config.echo_interval == 0:
                 print("Done steps: ", self.done_steps)
                 self.logger.print_last_rewards()
+
+            if self.config.intermediate_eval and self.done_steps % self.config.eval_interval == 0:
+                self.eval()
+
         self.logger.close()
 
     def step(self):
@@ -30,4 +34,8 @@ class BaseAgent():
         raise NotImplementedError
 
     def sample(self, indices):
+        raise NotImplementedError
+
+    # for now, only off policy algos implemented eval function
+    def eval(self):
         raise NotImplementedError

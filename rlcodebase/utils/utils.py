@@ -4,13 +4,17 @@ from gym.spaces.box import Box
 from gym.spaces.discrete import Discrete
 
 
-def tensor(x, device):
+def to_tensor(x, device):
     if isinstance(x, torch.Tensor):
         return x
     x = np.asarray(x, dtype=np.float32)
     x = torch.from_numpy(x).to(device)
     return x
 
+def to_numpy(x):
+    if isinstance(x, torch.Tensor):
+        return x.cpu().numpy()
+    return np.array(x, dtype=np.float32)
 
 def set_random_seed(seed):
     np.random.seed(seed)

@@ -7,13 +7,16 @@ class Config:
     def __init__(self):
         self.general_rl_config = ['algo', 'game', 'max_steps', 'num_envs', 'num_frame_stack', 'optimizer', 'lr', 'discount', 
                                   'use_gae', 'gae_lambda', 'use_grad_clip', 'max_grad_norm']
-        self.general_exp_config = ['echo_interval', 'num_echo_episodes', 'save_interval', 'save_path', 'use_gpu', 'seed', 'eval', 'tag']
+        self.general_exp_config = ['echo_interval', 'num_echo_episodes', 'save_interval', 'save_path', 'intermediate_eval','eval_interval', 'eval_episodes', 'use_gpu', 'seed', 'tag']
 
         temp_config = ['value_loss_coef', 'entropy_coef', 'rollout_length', 'ppo_epoch', 'ppo_clip_param', 'num_mini_batch', 'target_kl']
         self.ppo = self.general_rl_config + temp_config + self.general_exp_config
 
         temp_config = ['value_loss_coef', 'entropy_coef', 'rollout_length']
         self.a2c = self.general_rl_config + temp_config + self.general_exp_config
+
+        temp_config = ['replay_size', 'warmup_steps', 'replay_batch', 'action_noise', 'soft_update_rate']
+        self.ddpg = self.general_rl_config + temp_config + self.general_exp_config
 
         # set default attributes of config from default parser
         default_parser = init_parser()
@@ -52,7 +55,7 @@ def init_parser():
     # General RL parameters
     parser.add_argument('--algo',
                         default='a2c', type=str,
-                        help='type of reinforcement learning algorithm; support a2c and ppo for now')
+                        help='type of rl algos; support a2c, ppo and ddpg for now')
     parser.add_argument('--game',
                         default='BreakoutNoFrameskip-v4', type=str,
                         help='name of game')
@@ -88,7 +91,7 @@ def init_parser():
                         default=0.5, type=float,
                         help='max norm of gradients')
 
-    # Actor-Critic RL parameters
+    # Algo RL parameters
     parser.add_argument('--value-loss-coef',
                         default=0.5, type=float,
                         help='coefficient of value loss')
@@ -110,6 +113,21 @@ def init_parser():
     parser.add_argument('--num-mini-batch',
                         default=4, type=int,
                         help='PPO: number of mini batches in each epco, mini_batch_size = num_envs * rollout_length / num_mini_batch')
+    parser.add_argument('--replay-size',
+                        default=int(1e6), type=int,
+                        help='replay memory size for off policy algos')
+    parser.add_argument('--warmup-steps',
+                        default=int(1e4), type=int,
+                        help='warm up steps before sampling actions from policy and do learning')
+    parser.add_argument('--replay-batch',
+                        default=100, type=int,
+                        help='batch size of sampled data from replay memory')
+    parser.add_argument('--action-noise',
+                        default=0.1, type=float,
+                        help='std of zero-mean normal distrituion noise addted to action')
+    parser.add_argument('--soft-update-rate',
+                        default=0.005, type=float,
+                        help='soft update rate for synchronize target network with training network')
 
     # General Experiment Config
     parser.add_argument('--echo-interval',
@@ -124,17 +142,22 @@ def init_parser():
     parser.add_argument('--save-path',
                         default='default', type=str,
                         help='directory to save models and also the logs')
+    parser.add_argument('--intermediate-eval',
+                        default=False, action='store_true',
+                        help='do evaluation during the training; designed for off policy algos; need eval_env')
+    parser.add_argument('--eval-interval',
+                        default=int(1e4), type=int,
+                        help='number of steps between two evaluation; used only when intermediate_eval is True')
+    parser.add_argument('--eval-episodes',
+                        default=20, type=int,
+                        help='number of episodes for intermediate evaluation')
     parser.add_argument('--use-gpu',
                         default=False, action='store_true',
                         help='use gpu or cpu')
     parser.add_argument('--seed',
                         default=1, type=int,
                         help='random seed for numpy and torch')
-    parser.add_argument('--eval',
-                        default=False, action='store_true',
-                        help='evaluate the model without training')
     parser.add_argument('--tag',
                         default=None, type=str,
                         help='tag used in creating default save path; easier for user to distinguish saved results')
-
     return parser

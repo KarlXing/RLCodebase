@@ -32,6 +32,6 @@ def make_linear_model(layer_size, intermediate_activation=nn.ReLU, output_activa
     for i in range(len(layer_size)-2):
         layers.append(layer_init(nn.Linear(layer_size[i], layer_size[i+1])))
         layers.append(intermediate_activation())
-    layers.append(layer_init(nn.Linear([layer_size[-2], layer_size[-1]]), gain=output_gain))
+    layers.append(layer_init(nn.Linear(layer_size[-2], layer_size[-1]), gain=output_gain))
     layers.append(output_activation())
     return nn.Sequential(*layers)

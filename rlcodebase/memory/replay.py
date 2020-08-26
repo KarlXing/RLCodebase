@@ -3,30 +3,31 @@ import numpy as np
 import random
 from ..utils import *
 
-# Memory for q networks
 class Replay:
-    def __init__(self, obs_dim, act_dim, max_size):
-        self.state = np.zeros(combined_shape(size, obs_dim)).float()
-        self.next_state = np.zeros(combined_shape(size, obs_dim)).float()
-        self.action = np.zeros(combined_shape(size, act_dim)).float()
-        self.reward = np.zeros(size).float()
-        self.done = np.zeros(size).float()
-        self.ptr, self.size, self.max_size = 0, 0, max_size
+    def __init__(self, replay_size, num_envs, obs_space, action_space, device=torch.device('cpu')):
+        self.replay_size = replay_size // num_envs
+        self.current_size = 0
+        self.num_envs = num_envs
+        self.obs_shape = obs_space.shape
+        self.action_dim = get_action_dim(action_space)
+        self.discrete_action = is_discrete_action(action_space)
+        self.device = device
+        self.reset()
 
-    def store(self, state, action, reward, next_state, done):
-        self.state[self.ptr].copy_(state)
-        self.next_state[self.ptr].copy_(next_state)
-        self.action[self.ptr].copy_(action)
-        self.reward[self.ptr].copy_(rew)
-        self.done[self.ptr].copy_(done)
-        self.ptr = (self.ptr+1) % self.max_size
-        self.size = min(self.size+1, self.max_size)
+    def add(self, data):
+        for k,v in data.items():
+            getattr(self, k)[self.pos] = to_numpy(v).copy()
+        self.pos = (self.pos + 1) % self.replay_size
+        self.current_size = min(self.current_size+1, self.replay_size)
 
-    def sample_batch(self, batch_size=32):
-        idxs = np.random.randint(0, self.size, size=batch_size)
-        batch = dict(s=self.state[idxs],
-                     next_s=self.next_state[idxs],
-                     a=self.action[idxs],
-                     r=self.reward[idxs],
-                     m=self.done[idxs])
-        return batch
+    def reset(self):
+        self.pos = 0
+        self.s = np.zeros((self.replay_size, self.num_envs) + self.obs_shape, dtype=np.float32)
+        self.next_s = np.zeros((self.replay_size, self.num_envs) + self.obs_shape, dtype=np.float32)
+        if self.discrete_action:
+            self.a = np.zeros((self.replay_size, self.num_envs), dtype=np.float32)
+        else:
+            self.a = np.zeros((self.replay_size, self.num_envs, self.action_dim), dtype=np.float32)
+        self.r = np.zeros((self.replay_size, self.num_envs), dtype=np.float32)
+        self.d = np.zeros((self.replay_size, self.num_envs), dtype=np.float32)
+        self.v = np.zeros((self.replay_size, self.num_envs), dtype=np.float32)
