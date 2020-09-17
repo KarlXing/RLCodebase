@@ -137,7 +137,7 @@ def init_parser():
                         default=20, type=int,
                         help='the number of recent episodes whose episodic return will be averaged and then printed')
     parser.add_argument('--save-interval',
-                        default=int(1e5), type=int,
+                        default=None, type=int,
                         help='number of steps between two saving')
     parser.add_argument('--save-path',
                         default='default', type=str,

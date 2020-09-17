@@ -15,7 +15,7 @@ class BaseAgent():
         while self.done_steps < self.config.max_steps:
             self.step()
             self.done_steps += self.config.num_envs
-            if (self.done_steps) % self.config.save_interval == 0:
+            if self.config.save_interval and self.done_steps % self.config.save_interval == 0:
                 self.save()
 
             if self.config.echo_interval != 0 and self.done_steps % self.config.echo_interval == 0:
@@ -25,6 +25,7 @@ class BaseAgent():
             if self.config.intermediate_eval and self.done_steps % self.config.eval_interval == 0:
                 self.eval()
 
+        self.save()
         self.logger.close()
 
     def step(self):
