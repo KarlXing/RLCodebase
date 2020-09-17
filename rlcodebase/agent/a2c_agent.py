@@ -52,7 +52,7 @@ class A2CAgent(BaseAgent):
             self.storage.reset()
 
     def save(self):
-        torch.save(self.policy.model.state_dict(), os.path.join(self.config.save_path, 'model.pt'))
+        torch.save(self.policy.model.state_dict(), os.path.join(self.config.save_path, '%d-model.pt' % self.done_steps))
 
     def sample(self, indices):
         i1, i2 = convert_2dindex(indices, self.config.num_envs)
