@@ -28,13 +28,6 @@ def main():
     config.after_set()
     print(config)
 
-    # Users could also set up config from command line via ArgumentParser. For example
-    '''
-    parser = init_parser()
-    args = parser.parse_args()
-    config.update(args)
-    '''
-
     # prepare env, model and logger
     env = make_vec_envs(config.game, num_envs = config.num_envs, seed = config.seed, num_frame_stack= config.num_frame_stack)
     model = CatACConvNet(input_channels = env.observation_space.shape[0], action_dim = get_action_dim(env.action_space)).to(config.device)

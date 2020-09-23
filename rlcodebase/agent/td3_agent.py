@@ -6,18 +6,21 @@ import numpy as np
 from .base_agent import BaseAgent
 from ..memory import Replay 
 from ..utils import to_numpy, to_tensor, convert_2dindex
-from ..policy import DDPGPolicy
+from ..policy import TD3Policy
 
 
-class DDPGAgent(BaseAgent):
+class TD3Agent(BaseAgent):
     def __init__(self, config, env, eval_env, model, target_model, logger):
         super().__init__(config)
-        self.policy = DDPGPolicy(model,
+        self.policy = TD3Policy(model,
                                 target_model,
                                 config.discount,
                                 config.optimizer,
                                 config.lr,
-                                config.soft_update_rate)
+                                config.soft_update_rate,
+                                config.target_noise,
+                                config.target_noise_clip,
+                                config.policy_delay)
         self.env = env
         self.eval_env = eval_env
         self.state = to_tensor(env.reset(), config.device)
@@ -47,7 +50,7 @@ class DDPGAgent(BaseAgent):
         if self.done_steps > self.config.warmup_steps:
             indices = random.sample(list(range(self.storage.current_size * self.config.num_envs)), self.config.replay_batch)
             batch = self.sample(indices)
-            loss = self.policy.learn_on_batch(batch)
+            loss = self.policy.learn_on_batch(batch, self.action_limit)
             self.logger.add_scalar(['action_loss', 'value_loss'], loss, self.done_steps)
 
     def save(self):

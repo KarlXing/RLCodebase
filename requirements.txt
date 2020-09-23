@@ -2,5 +2,4 @@ matplotlib
 atari-py
 Box2D
 pybullet
-mujoco-py<2.1,>=2.0
-git+git://github.com/openai/baselines.git@ea25b9e#egg=baselines
+git+git://github.com/karlxing/baselines.git@3d43411#egg=baselines

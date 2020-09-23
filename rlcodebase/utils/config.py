@@ -18,6 +18,9 @@ class Config:
         temp_config = ['replay_size', 'warmup_steps', 'replay_batch', 'action_noise', 'soft_update_rate']
         self.ddpg = self.general_rl_config + temp_config + self.general_exp_config
 
+        temp_config = ['replay_size', 'warmup_steps', 'replay_batch', 'action_noise', 'soft_update_rate', 'target_noise', 'target_noise_clip', 'policy_delay']
+        self.td3 = self.general_rl_config + temp_config + self.general_exp_config
+
         # set default attributes of config from default parser
         default_parser = init_parser()
         args = default_parser.parse_args([])
@@ -55,7 +58,7 @@ def init_parser():
     # General RL parameters
     parser.add_argument('--algo',
                         default='a2c', type=str,
-                        help='type of rl algos; support a2c, ppo and ddpg for now')
+                        help='type of rl algos; support a2c, ppo, ddpg and td3 for now')
     parser.add_argument('--game',
                         default='BreakoutNoFrameskip-v4', type=str,
                         help='name of game')
@@ -72,7 +75,7 @@ def init_parser():
                         default='RMSprop', type=str,
                         help='Optimizer: RMSprop | Adam')
     parser.add_argument('--lr',
-                        default=0.0007, type=float,
+                        default=0.0001, type=float,
                         help='learning rate')
     parser.add_argument('--discount',
                         default=0.99, type=float,
@@ -88,7 +91,7 @@ def init_parser():
                         default=False, action='store_true',
                         help='clip gradients or not')
     parser.add_argument('--max-grad-norm',
-                        default=0.5, type=float,
+                        default=5, type=float,
                         help='max norm of gradients')
 
     # Algo RL parameters
@@ -124,10 +127,20 @@ def init_parser():
                         help='batch size of sampled data from replay memory')
     parser.add_argument('--action-noise',
                         default=0.1, type=float,
-                        help='std of zero-mean normal distrituion noise addted to action')
+                        help='std of zero-mean normal distrituion noise added to action')
     parser.add_argument('--soft-update-rate',
                         default=0.005, type=float,
                         help='soft update rate for synchronize target network with training network')
+    parser.add_argument('--target-noise',
+                        default=0.2, type=float,
+                        help='std of zero-mean normal distrituion noise added to next action when evaluating target q value')
+    parser.add_argument('--target-noise-clip',
+                        default=0.5, type=float,
+                        help='limit for absolute value of td3-target-noise')
+    parser.add_argument('--policy-delay',
+                        default=2, type=int,
+                        help='the delay of policy update compared to value update')
+
 
     # General Experiment Config
     parser.add_argument('--echo-interval',

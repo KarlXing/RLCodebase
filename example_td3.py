@@ -1,15 +1,15 @@
 import rlcodebase
 from rlcodebase.env import make_vec_envs
-from rlcodebase.agent import DDPGAgent
+from rlcodebase.agent import TD3Agent
 from rlcodebase.utils import get_action_dim, init_parser, Config, Logger
-from rlcodebase.model import ConDetACLinearNet
+from rlcodebase.model import ConDetADCLinearNet
 from torch.utils.tensorboard import SummaryWriter
 
 def main():
     # create config
     config = Config()
     config.game = 'HalfCheetah-v2'
-    config.algo = 'ddpg'
+    config.algo = 'td3'
     config.max_steps = int(1e6)
     config.num_envs = 2
     config.optimizer = 'Adam'
@@ -32,12 +32,12 @@ def main():
     # prepare env, model and logger
     env = make_vec_envs(config.game, num_envs = config.num_envs, seed = config.seed)
     eval_env = make_vec_envs(config.game, num_envs = 1, seed = config.seed)
-    model = ConDetACLinearNet(input_dim = env.observation_space.shape[0], action_dim = get_action_dim(env.action_space)).to(config.device)
-    target_model = ConDetACLinearNet(input_dim = env.observation_space.shape[0], action_dim = get_action_dim(env.action_space)).to(config.device)
+    model = ConDetADCLinearNet(input_dim = env.observation_space.shape[0], action_dim = get_action_dim(env.action_space)).to(config.device)
+    target_model = ConDetADCLinearNet(input_dim = env.observation_space.shape[0], action_dim = get_action_dim(env.action_space)).to(config.device)
     logger =  Logger(SummaryWriter(config.save_path), config.num_echo_episodes)
 
     # create agent and run
-    agent = DDPGAgent(config, env, eval_env, model, target_model, logger)
+    agent = TD3Agent(config, env, eval_env, model, target_model, logger)
     agent.run()
 
 if __name__ == '__main__':

@@ -12,8 +12,8 @@ def main():
     config.algo = 'ppo'
     config.max_steps = int(1e8)
     config.num_envs = 8
-    config.optimizer = 'Adam'
-    config.lr = 0.0002
+    config.optimizer = 'RMSprop'
+    config.lr = 0.0001
     config.discount = 0.99
     config.use_gae = True
     config.gae_lambda = 0.95
@@ -30,13 +30,6 @@ def main():
     config.num_frame_stack = 4
     config.after_set()
     print(config)
-
-    # Users could also set up config from command line via ArgumentParser. For example
-    '''
-    parser = init_parser()
-    args = parser.parse_args()
-    config.update(args)
-    '''
 
     # prepare env, model and logger
     env = make_vec_envs(config.game, num_envs = config.num_envs, seed = config.seed, num_frame_stack= config.num_frame_stack)

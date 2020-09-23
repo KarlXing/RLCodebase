@@ -24,7 +24,8 @@ class Logger:
         if self.writer is None:
             return
         for (i, tag) in enumerate(tags):
-            self.writer.add_scalar(tag, values[i], step if isinstance(step, int) else step[i])
+            if values[i] is not None:
+                self.writer.add_scalar(tag, values[i], step if isinstance(step, int) else step[i])
 
 
     def close(self):

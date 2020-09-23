@@ -85,4 +85,23 @@ class ConDetACLinearNet(nn.Module):
         inputs = torch.cat([x, a], dim=1)
         return self.critic(inputs)
 
+# Continuous-Deterministic-Actor-Double-Critic-Linear-Net (e.g. TD3)
+class ConDetADCLinearNet(nn.Module):
+    def __init__(self, input_dim, action_dim, hidden_layer = [400, 300]):
+        super(ConDetADCLinearNet, self).__init__()
+        actor_layer_size = [input_dim] + hidden_layer + [action_dim]
+        self.actor = make_linear_model(actor_layer_size, output_activation = nn.Tanh, output_gain = 0.01)
+        critic_layer_size = [input_dim + action_dim] + hidden_layer + [1]
+        self.critic1 = make_linear_model(critic_layer_size, output_gain = 0.01)
+        self.critic2 = make_linear_model(critic_layer_size, output_gain = 0.01)
+        self.actor_params =  list(self.actor.parameters())
+        self.critic_params =  list(self.critic1.parameters()) + list(self.critic2.parameters())
+
+    def act(self, x):
+        return self.actor(x)
+
+    def value(self, x, a):
+        inputs = torch.cat([x, a], dim=1)
+        return self.critic1(inputs), self.critic2(inputs)
+
 
