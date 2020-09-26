@@ -29,6 +29,13 @@ pip install -r requirements.txt
 python example_a2c.py
 ````
 
+## Supported Algorithms
+* A2C
+* PPO
+* DDPG
+* TD3
+* SAC
+
 ## Results
 ### Atari Games 
 <p float="left">

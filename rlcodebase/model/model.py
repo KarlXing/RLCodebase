@@ -1,7 +1,9 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+from torch.distributions import Categorical, Normal
+import numpy as np
 from .model_utils import *
-from torch.distributions import Categorical
 
 # Categorical-Actor-Critic-Convolutional-Net
 class CatACConvNet(nn.Module):
@@ -103,5 +105,44 @@ class ConDetADCLinearNet(nn.Module):
     def value(self, x, a):
         inputs = torch.cat([x, a], dim=1)
         return self.critic1(inputs), self.critic2(inputs)
+
+# Continuous-Stochastic-SquashedGaussian-Actor-Double-Critic-Linear-Net (e.g. SAC)
+class ConStoSGADCLinearNet(nn.Module):
+    def __init__(self, input_dim, action_dim, hidden_layer = [400, 300], log_std_range = (-20, 2)):
+        super(ConStoSGADCLinearNet, self).__init__()
+        actor_layer_size = [input_dim] + hidden_layer + [action_dim]
+        self.actor_mu = make_linear_model(actor_layer_size, output_activation = nn.Identity, output_gain = 1)
+        self.actor_log_std = make_linear_model(actor_layer_size, output_activation=nn.Identity, output_gain = 1)
+        critic_layer_size = [input_dim + action_dim] + hidden_layer + [1]
+        self.critic1 = make_linear_model(critic_layer_size, output_gain = 0.01)
+        self.critic2 = make_linear_model(critic_layer_size, output_gain = 0.01)
+        self.actor_params =  list(self.actor_mu.parameters()) + list(self.actor_log_std.parameters())
+        self.critic_params =  list(self.critic1.parameters()) + list(self.critic2.parameters())
+
+        self.log_std_range = log_std_range
+
+    def act(self, x):
+        mu = self.actor_mu(x)
+        log_std = self.actor_log_std(x)
+        if self.log_std_range is not None:
+            log_std = torch.clamp(log_std, self.log_std_range[0], self.log_std_range[1])
+        std = torch.exp(log_std)
+        dist = Normal(mu, std)
+        action = dist.rsample()
+        log_p_action = dist.log_prob(action).sum(dim=-1)
+        
+        # squshed function; from spinningup
+        log_p_action -= (2*(np.log(2) - action - F.softplus(-2*action))).sum(dim=1)
+        action = torch.tanh(action)
+
+        # return sampled action, log_prob of sampled action, deterministic action
+        return action, log_p_action, torch.tanh(mu)
+
+    def value(self, x, a):
+        inputs = torch.cat([x, a], dim=1)
+        return self.critic1(inputs), self.critic2(inputs)
+
+
+
 
 

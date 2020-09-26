@@ -21,6 +21,10 @@ class Config:
         temp_config = ['replay_size', 'warmup_steps', 'replay_batch', 'action_noise', 'soft_update_rate', 'target_noise', 'target_noise_clip', 'policy_delay']
         self.td3 = self.general_rl_config + temp_config + self.general_exp_config
 
+        temp_config = ['replay_size', 'warmup_steps', 'replay_batch', 'sac_alpha', 'automatic_alpha', 'soft_update_rate']
+        self.sac = self.general_rl_config + temp_config + self.general_exp_config
+
+
         # set default attributes of config from default parser
         default_parser = init_parser()
         args = default_parser.parse_args([])
@@ -94,6 +98,7 @@ def init_parser():
                         default=5, type=float,
                         help='max norm of gradients')
 
+
     # Algo RL parameters
     parser.add_argument('--value-loss-coef',
                         default=0.5, type=float,
@@ -140,6 +145,12 @@ def init_parser():
     parser.add_argument('--policy-delay',
                         default=2, type=int,
                         help='the delay of policy update compared to value update')
+    parser.add_argument('--sac-alpha',
+                        default=0.2, type=int,
+                        help='alpha parameter to control the exploration of soft actor-critic')
+    parser.add_argument('--automatic-alpha',
+                        default=False, action='store_true',
+                        help='automatically adjusting the alpha parameter of soft actor-critic')
 
 
     # General Experiment Config
