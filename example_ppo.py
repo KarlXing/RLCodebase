@@ -8,12 +8,12 @@ from torch.utils.tensorboard import SummaryWriter
 def main():
     # create config
     config = Config()
-    config.game = 'SeaquestNoFrameskip-v4'
+    config.game = 'BreakoutNoFrameskip-v4'
     config.algo = 'ppo'
-    config.max_steps = int(1e8)
+    config.max_steps = int(2e7)
     config.num_envs = 8
-    config.optimizer = 'RMSprop'
-    config.lr = 0.0001
+    config.optimizer = 'Adam'
+    config.lr = 0.00025
     config.discount = 0.99
     config.use_gae = True
     config.gae_lambda = 0.95

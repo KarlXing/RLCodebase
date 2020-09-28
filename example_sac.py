@@ -15,19 +15,16 @@ def main():
     config.optimizer = 'Adam'
     config.lr = 0.001
     config.discount = 0.99
-    config.use_gae = True
-    config.gae_lambda = 0.95
-    config.rollout_length = 5
     config.replay_size = int(1e6)
     config.replay_batch = 100
     config.warmup_steps = 10000
-    config.action_noise = 0.1
     config.soft_update_rate = 0.005
-    config.intermediate_eval = True
-    config.use_gpu = True
-    config.seed = 1
     config.sac_alpha = 0.2
-    config.automatic_alpha = True
+    config.automatic_alpha = False
+    config.intermediate_eval = True
+    config.eval_interval = int(1e4)
+    config.use_gpu = True
+    config.seed = 0
     config.after_set()
     print(config)
 

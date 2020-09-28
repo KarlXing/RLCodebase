@@ -24,6 +24,9 @@ class Config:
         temp_config = ['replay_size', 'warmup_steps', 'replay_batch', 'sac_alpha', 'automatic_alpha', 'soft_update_rate']
         self.sac = self.general_rl_config + temp_config + self.general_exp_config
 
+        temp_config = ['replay_size', 'replay_batch', 'exploration_threshold_start', 'exploration_threshold_end', 'exploration_steps']
+        self.dqn = self.general_rl_config + temp_config + self.general_exp_config
+
 
         # set default attributes of config from default parser
         default_parser = init_parser()
@@ -62,7 +65,7 @@ def init_parser():
     # General RL parameters
     parser.add_argument('--algo',
                         default='a2c', type=str,
-                        help='type of rl algos; support a2c, ppo, ddpg and td3 for now')
+                        help='type of rl algos; support dqn, a2c, ppo, ddpg, td3 and sac for now')
     parser.add_argument('--game',
                         default='BreakoutNoFrameskip-v4', type=str,
                         help='name of game')
@@ -151,7 +154,15 @@ def init_parser():
     parser.add_argument('--automatic-alpha',
                         default=False, action='store_true',
                         help='automatically adjusting the alpha parameter of soft actor-critic')
-
+    parser.add_argument('--exploration-threshold-start',
+                        default=1, type=float,
+                        help='the beginning threshold of dqn exploration')
+    parser.add_argument('--exploration-threshold-end',
+                        default=0.01, type=float,
+                        help='the end threshold of dqn exploration')
+    parser.add_argument('--exploration-steps',
+                        default=int(1e6), type=float,
+                        help='the number of steps for dqn exploration, the threshold decreases from start to end linearly within steps')
 
     # General Experiment Config
     parser.add_argument('--echo-interval',

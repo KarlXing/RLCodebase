@@ -29,7 +29,7 @@ class CatACConvNet(nn.Module):
 
 # Categorical-Actor-Critic-Linear-Net
 class CatACLinearNet(nn.Module):
-    def __init__(self, input_dim, action_dim, hidden_layer = [400,300]):
+    def __init__(self, input_dim, action_dim, hidden_layer = [400, 300]):
         super(CatACLinearNet, self).__init__()
         actor_layer_size = [input_dim] + hidden_layer + [action_dim]
         self.actor = make_linear_model(actor_layer_size, output_gain = 0.01)
@@ -106,24 +106,27 @@ class ConDetADCLinearNet(nn.Module):
         inputs = torch.cat([x, a], dim=1)
         return self.critic1(inputs), self.critic2(inputs)
 
-# Continuous-Stochastic-SquashedGaussian-Actor-Double-Critic-Linear-Net (e.g. SAC)
+
+# Continuous-Stochastic-SquashedGaussian-Actor-Double-Critic-Linear-Net2 (Shared body in actor, e.g. SAC)
 class ConStoSGADCLinearNet(nn.Module):
     def __init__(self, input_dim, action_dim, hidden_layer = [400, 300], log_std_range = (-20, 2)):
         super(ConStoSGADCLinearNet, self).__init__()
-        actor_layer_size = [input_dim] + hidden_layer + [action_dim]
-        self.actor_mu = make_linear_model(actor_layer_size, output_activation = nn.Identity, output_gain = 1)
-        self.actor_log_std = make_linear_model(actor_layer_size, output_activation=nn.Identity, output_gain = 1)
+        actor_layer_size = [input_dim] + hidden_layer
+        self.actor_body = make_linear_model(actor_layer_size, output_activation = nn.ReLU)
+        self.actor_mu = nn.Linear(hidden_layer[-1], action_dim)
+        self.actor_log_std = nn.Linear(hidden_layer[-1], action_dim)
         critic_layer_size = [input_dim + action_dim] + hidden_layer + [1]
         self.critic1 = make_linear_model(critic_layer_size, output_gain = 0.01)
         self.critic2 = make_linear_model(critic_layer_size, output_gain = 0.01)
-        self.actor_params =  list(self.actor_mu.parameters()) + list(self.actor_log_std.parameters())
+        self.actor_params =  list(self.actor_body.parameters()) + list(self.actor_mu.parameters()) + list(self.actor_log_std.parameters())
         self.critic_params =  list(self.critic1.parameters()) + list(self.critic2.parameters())
 
         self.log_std_range = log_std_range
 
     def act(self, x):
-        mu = self.actor_mu(x)
-        log_std = self.actor_log_std(x)
+        actor_features = self.actor_body(x)
+        mu = self.actor_mu(actor_features)
+        log_std = self.actor_log_std(actor_features)
         if self.log_std_range is not None:
             log_std = torch.clamp(log_std, self.log_std_range[0], self.log_std_range[1])
         std = torch.exp(log_std)
@@ -143,6 +146,18 @@ class ConStoSGADCLinearNet(nn.Module):
         return self.critic1(inputs), self.critic2(inputs)
 
 
+# Categorical-Q-Convolutional-Net
+class CatQConvNet(nn.Module):
+    def __init__(self, input_channels, action_dim,  hidden_size = 512, flatten_size = 64*7*7):
+        super(CatQConvNet, self).__init__()
+        self.main = ConvBody(input_channels = input_channels, hidden_size = hidden_size, flatten_size = flatten_size)
+        self.q = layer_init(nn.Linear(hidden_size, action_dim))
+        self.q_params = list(self.main.parameters()) + list(self.q.parameters())
 
+    def forward(self, x, action = None):
+        features = self.main(x/255)
+        q = self.q(features)
+
+        return q
 
 

@@ -30,6 +30,7 @@ python example_a2c.py
 ````
 
 ## Supported Algorithms
+* DQN
 * A2C
 * PPO
 * DDPG

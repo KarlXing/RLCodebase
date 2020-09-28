@@ -45,10 +45,11 @@ class DDPGAgent(BaseAgent):
         self.state = to_tensor(next_state, self.config.device)
 
         if self.done_steps > self.config.warmup_steps:
-            indices = random.sample(list(range(self.storage.current_size * self.config.num_envs)), self.config.replay_batch)
-            batch = self.sample(indices)
-            loss = self.policy.learn_on_batch(batch)
-            self.logger.add_scalar(['action_loss', 'value_loss'], loss, self.done_steps)
+            for i in range(self.config.num_envs):
+                indices = random.sample(list(range(self.storage.current_size * self.config.num_envs)), self.config.replay_batch)
+                batch = self.sample(indices)
+                loss = self.policy.learn_on_batch(batch)
+                self.logger.add_scalar(['action_loss', 'value_loss'], loss, self.done_steps+i)
 
     def save(self):
         torch.save(self.policy.model.state_dict(), os.path.join(self.config.save_path, '%d-model.pt' % self.done_steps))

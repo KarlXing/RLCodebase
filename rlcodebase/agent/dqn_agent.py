@@ -5,38 +5,40 @@ import numpy as np
 
 from .base_agent import BaseAgent
 from ..memory import Replay 
-from ..utils import to_numpy, to_tensor, convert_2dindex
-from ..policy import TD3Policy
+from ..utils import to_numpy, to_tensor, convert_2dindex, get_threshold
+from ..policy import DQNPolicy
 
 
-class TD3Agent(BaseAgent):
+class DQNAgent(BaseAgent):
     def __init__(self, config, env, eval_env, model, target_model, logger):
         super().__init__(config)
-        self.policy = TD3Policy(model,
+        self.policy = DQNPolicy(model,
                                 target_model,
                                 config.discount,
                                 config.optimizer,
                                 config.lr,
                                 config.soft_update_rate,
-                                config.target_noise,
-                                config.target_noise_clip,
-                                config.policy_delay)
+                                config.use_grad_clip,
+                                config.max_grad_norm)
         self.env = env
         self.eval_env = eval_env
         self.state = to_tensor(env.reset(), config.device)
         self.logger = logger
         self.storage = Replay(config.replay_size, config.num_envs, env.observation_space, env.action_space, config.device)
         self.sample_keys = ['s', 'a', 'r', 'd', 'next_s']
-        self.action_limit = {'high':self.env.action_space.high[0], 'low':self.env.action_space.low[0]}
 
     def step(self):
-        if self.done_steps < self.config.warmup_steps:
-            action = np.array([self.env.action_space.sample() for _ in range(self.config.num_envs)])
-        else:
-            with torch.no_grad():
-                action = self.policy.inference(self.state).cpu().numpy()
-                action += np.random.normal(0, self.config.action_noise, action.shape)
-                action = np.clip(action, self.action_limit['low'], self.action_limit['high'])
+        self.random_action_threshold = get_threshold(self.config.exploration_threshold_start, 
+                                                     self.config.exploration_threshold_end, 
+                                                     self.config.exploration_steps,
+                                                     self.done_steps)
+        with torch.no_grad():
+            q = self.policy.inference(self.state).cpu().numpy()
+            greedy_action = np.argmax(q, axis=-1)
+            random_action = np.random.randint(q.shape[1], size=q.shape[0])
+            random_val = np.random.rand(q.shape[0])
+            action = np.where(random_val > self.random_action_threshold, greedy_action, random_action)
+
         next_state, rwd, done, info = self.env.step(action)
         self.storage.add({'s': self.state,
                           'a': action,
@@ -47,12 +49,11 @@ class TD3Agent(BaseAgent):
 
         self.state = to_tensor(next_state, self.config.device)
 
-        if self.done_steps > self.config.warmup_steps:
-            for i in range(self.config.num_envs):
-                indices = random.sample(list(range(self.storage.current_size * self.config.num_envs)), self.config.replay_batch)
-                batch = self.sample(indices)
-                loss = self.policy.learn_on_batch(batch, self.action_limit)
-                self.logger.add_scalar(['action_loss', 'value_loss'], loss, self.done_steps+i)
+        if self.done_steps > self.config.replay_batch:
+            indices = random.sample(list(range(self.storage.current_size * self.config.num_envs)), self.config.replay_batch)
+            batch = self.sample(indices)
+            loss = self.policy.learn_on_batch(batch)
+            self.logger.add_scalar(['q_loss'], loss, self.done_steps)
 
     def save(self):
         torch.save(self.policy.model.state_dict(), os.path.join(self.config.save_path, '%d-model.pt' % self.done_steps))
@@ -69,10 +70,12 @@ class TD3Agent(BaseAgent):
         state = to_tensor(self.eval_env.reset(), self.config.device)
         while (len(eval_returns) < self.config.eval_episodes):
             with torch.no_grad():
-                action = self.policy.inference(state).cpu().numpy()
+                q = self.policy.inference(state).cpu().numpy()
+                action = np.argmax(q, axis=-1)
             next_state, rwd, done, info = self.eval_env.step(action)
-            for (i,d) in enumerate(done):
-                if d:
-                    eval_returns.append(info[i]['episodic_return'])
+            for i in info:
+                if i['episodic_return'] is not None:
+                    eval_returns.append(i['episodic_return'])
             state = to_tensor(next_state, self.config.device)
         self.logger.add_scalar(['eval_returns'], [np.mean(eval_returns)], self.done_steps)
+

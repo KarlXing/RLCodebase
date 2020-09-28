@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+import math
 from gym.spaces.box import Box
 from gym.spaces.discrete import Discrete
 
@@ -44,3 +45,9 @@ def convert_2dindex(indices, d):
         idx1.append(i//d)
         idx2.append(i%d)
     return idx1, idx2
+
+def get_threshold(threshold_start, threshold_end, decay_steps, done_steps):
+    if done_steps > decay_steps:
+        return threshold_end
+    else:
+        return threshold_start - (threshold_start - threshold_end) * done_steps / decay_steps
