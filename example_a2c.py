@@ -4,9 +4,15 @@ from rlcodebase.agent import A2CAgent
 from rlcodebase.utils import get_action_dim, init_parser, Config, Logger
 from rlcodebase.model import CatACConvNet
 from torch.utils.tensorboard import SummaryWriter
+from argparse import ArgumentParser
+
+parser = ArgumentParser()
+parser.add_argument('--game', default='BreakoutNoFrameskip-v4', type=str)
+parser.add_argument('--seed', default=0, type=int)
+args = parser.parse_args()
 
 def main():
-    # create config
+    # create config with basic parameters for a2c
     config = Config()
     config.game = 'BreakoutNoFrameskip-v4'
     config.algo = 'a2c'
@@ -23,8 +29,12 @@ def main():
     config.value_loss_coef = 0.5
     config.entropy_coef = 0.01
     config.use_gpu = True
-    config.seed = 1
     config.num_frame_stack = 4
+    config.seed = 1
+
+    # update config with argparse object (pass game and seed from command line)
+    config.update(args)
+    config.tag = '%s-%s-%d' % (config.game, config.algo, config.seed)
     config.after_set()
     print(config)
 

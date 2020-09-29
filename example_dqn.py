@@ -4,6 +4,12 @@ from rlcodebase.agent import DQNAgent
 from rlcodebase.utils import get_action_dim, init_parser, Config, Logger
 from rlcodebase.model import CatQConvNet
 from torch.utils.tensorboard import SummaryWriter
+from argparse import ArgumentParser
+
+parser = ArgumentParser()
+parser.add_argument('--game', default='BreakoutNoFrameskip-v4', type=str)
+parser.add_argument('--seed', default=0, type=int)
+args = parser.parse_args()
 
 def main():
     # create config
@@ -26,14 +32,18 @@ def main():
     config.intermediate_eval = True
     config.eval_interval = int(1e5)
     config.use_gpu = True
-    config.seed = 0
     config.num_frame_stack = 4
+    config.seed = 0
+
+    # update config with argparse object (pass game and seed from command line)
+    config.update(args)
+    config.tag = '%s-%s-%d' % (config.game, config.algo, config.seed)
     config.after_set()
     print(config)
 
     # prepare env, model and logger
     env = make_vec_envs(config.game, num_envs = config.num_envs, seed = config.seed, num_frame_stack= config.num_frame_stack)
-    eval_env = make_vec_envs(config.game, num_envs = 1, seed = config.seed)
+    eval_env = make_vec_envs(config.game, num_envs = 1, seed = config.seed, num_frame_stack= config.num_frame_stack)
     model = CatQConvNet(input_channels = env.observation_space.shape[0], action_dim = get_action_dim(env.action_space)).to(config.device)
     target_model = CatQConvNet(input_channels = env.observation_space.shape[0], action_dim = get_action_dim(env.action_space)).to(config.device)
     logger =  Logger(SummaryWriter(config.save_path), config.num_echo_episodes)

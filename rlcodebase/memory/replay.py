@@ -8,6 +8,7 @@ class Replay:
         self.replay_size = replay_size // num_envs
         self.current_size = 0
         self.num_envs = num_envs
+        self.obs_space = obs_space
         self.obs_shape = obs_space.shape
         self.action_dim = get_action_dim(action_space)
         self.discrete_action = is_discrete_action(action_space)
@@ -22,8 +23,8 @@ class Replay:
 
     def reset(self):
         self.pos = 0
-        self.s = np.zeros((self.replay_size, self.num_envs) + self.obs_shape, dtype=np.float32)
-        self.next_s = np.zeros((self.replay_size, self.num_envs) + self.obs_shape, dtype=np.float32)
+        self.s = np.zeros((self.replay_size, self.num_envs) + self.obs_shape, dtype=self.obs_space.dtype)
+        self.next_s = np.zeros((self.replay_size, self.num_envs) + self.obs_shape, dtype=self.obs_space.dtype)
         if self.discrete_action:
             self.a = np.zeros((self.replay_size, self.num_envs), dtype=np.float32)
         else:
