@@ -24,7 +24,7 @@ class Config:
         temp_config = ['replay_size', 'warmup_steps', 'replay_batch', 'sac_alpha', 'automatic_alpha', 'soft_update_rate']
         self.sac = self.general_rl_config + temp_config + self.general_exp_config
 
-        temp_config = ['replay_size', 'replay_batch', 'exploration_threshold_start', 'exploration_threshold_end', 'exploration_steps']
+        temp_config = ['replay_size', 'replay_batch', 'exploration_threshold_start', 'exploration_threshold_end', 'exploration_steps', 'target_update_interval', 'learning_start']
         self.dqn = self.general_rl_config + temp_config + self.general_exp_config
 
 
@@ -89,8 +89,7 @@ def init_parser():
                         help='discount factor for rewards')
     parser.add_argument('--use-gae',
                         default=False, action='store_true',
-                        help='use generalized advantage estimation or not'
-                        )
+                        help='use generalized advantage estimation or not')
     parser.add_argument('--gae-lambda',
                         default=0.95, type=float,
                         help='lambda parameter used in GAE')
@@ -163,6 +162,13 @@ def init_parser():
     parser.add_argument('--exploration-steps',
                         default=int(1e6), type=float,
                         help='the number of steps for dqn exploration, the threshold decreases from start to end linearly within steps')
+    parser.add_argument('--target-update-interval',
+                        default=int(1e4), type=int,
+                        help='the interval of synchronizing the target network')
+    parser.add_argument('--learning-start',
+                        default=int(5e4), type=int,
+                        help='the number of steps before the start of learning')
+
 
     # General Experiment Config
     parser.add_argument('--echo-interval',

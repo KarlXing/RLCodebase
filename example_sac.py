@@ -5,6 +5,7 @@ from rlcodebase.utils import get_action_dim, init_parser, Config, Logger
 from rlcodebase.model import ConStoSGADCLinearNet
 from torch.utils.tensorboard import SummaryWriter
 from argparse import ArgumentParser
+import pybullet_envs
 
 parser = ArgumentParser()
 parser.add_argument('--game', default='HalfCheetah-v2', type=str)

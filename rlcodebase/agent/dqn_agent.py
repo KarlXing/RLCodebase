@@ -17,7 +17,6 @@ class DQNAgent(BaseAgent):
                                 config.discount,
                                 config.optimizer,
                                 config.lr,
-                                config.soft_update_rate,
                                 config.use_grad_clip,
                                 config.max_grad_norm)
         self.env = env
@@ -49,11 +48,14 @@ class DQNAgent(BaseAgent):
 
         self.state = to_tensor(next_state, self.config.device)
 
-        if self.done_steps > self.config.replay_batch:
+        if self.done_steps > self.config.learning_start:
             indices = random.sample(list(range(self.storage.current_size * self.config.num_envs)), self.config.replay_batch)
             batch = self.sample(indices)
             loss = self.policy.learn_on_batch(batch)
             self.logger.add_scalar(['q_loss'], loss, self.done_steps)
+
+        if self.done_steps % self.config.target_update_interval == 0:
+            self.policy.update_target()
 
     def save(self):
         torch.save(self.policy.model.state_dict(), os.path.join(self.config.save_path, '%d-model.pt' % self.done_steps))

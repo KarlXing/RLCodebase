@@ -25,10 +25,11 @@ def main():
     config.max_grad_norm = 5
     config.replay_size = int(1e5)
     config.replay_batch = 32
-    config.soft_update_rate = 0.001
     config.exploration_threshold_start = 1
     config.exploration_threshold_end = 0.01
     config.exploration_steps = int(1e6)
+    config.target_update_interval = int(1e4)
+    config.learning_start = int(5e4)
     config.intermediate_eval = True
     config.eval_interval = int(1e5)
     config.use_gpu = True
