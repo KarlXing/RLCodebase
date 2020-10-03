@@ -25,7 +25,7 @@ class TD3Agent(BaseAgent):
         self.eval_env = eval_env
         self.state = to_tensor(env.reset(), config.device)
         self.logger = logger
-        self.storage = Replay(config.replay_size, config.num_envs, env.observation_space, env.action_space, config.device)
+        self.storage = Replay(config.replay_size, config.num_envs, env.observation_space, env.action_space, config.replay_device)
         self.sample_keys = ['s', 'a', 'r', 'd', 'next_s']
         self.action_limit = {'high':self.env.action_space.high[0], 'low':self.env.action_space.low[0]}
 
@@ -38,11 +38,11 @@ class TD3Agent(BaseAgent):
                 action += np.random.normal(0, self.config.action_noise, action.shape)
                 action = np.clip(action, self.action_limit['low'], self.action_limit['high'])
         next_state, rwd, done, info = self.env.step(action)
-        self.storage.add({'s': self.state,
-                          'a': action,
-                          'r': rwd,
-                          'd': done,
-                          'next_s': next_state})
+        self.storage.add({'s': to_tensor(self.state, self.config.replay_device),
+                          'a': to_tensor(action, self.config.replay_device),
+                          'r': to_tensor(rwd, self.config.replay_device),
+                          'd': to_tensor(done, self.config.replay_device),
+                          'next_s': to_tensor(next_state, self.config.replay_device)})
         self.logger.save_episodic_return(info, self.done_steps)
 
         self.state = to_tensor(next_state, self.config.device)

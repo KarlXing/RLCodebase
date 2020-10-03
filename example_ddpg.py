@@ -24,6 +24,7 @@ def main():
     config.discount = 0.99
     config.replay_size = int(1e6)
     config.replay_batch = 100
+    config.replay_on_gpu = True
     config.warmup_steps = 10000
     config.action_noise = 0.1
     config.soft_update_rate = 0.005

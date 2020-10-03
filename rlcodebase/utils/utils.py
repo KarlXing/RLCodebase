@@ -7,7 +7,7 @@ from gym.spaces.discrete import Discrete
 
 def to_tensor(x, device):
     if isinstance(x, torch.Tensor):
-        return x
+        return x.type(torch.float).to(device)
     x = np.asarray(x, dtype=np.float32)
     x = torch.from_numpy(x).to(device)
     return x
@@ -51,3 +51,23 @@ def get_threshold(threshold_start, threshold_end, decay_steps, done_steps):
         return threshold_end
     else:
         return threshold_start - (threshold_start - threshold_end) * done_steps / decay_steps
+
+def convert_dtype(np_dtype):
+    if str(np_dtype) == 'float64':  # replace double with float
+        return torch.float
+    elif str(np_dtype) == 'float32':
+        return torch.float
+    elif str(np_dtype) == 'float16':
+        return torch.half
+    elif str(np_dtype) == 'uint8':
+        return torch.uint8
+    elif str(np_dtype) == 'int8':
+        return torch.int8
+    elif str(np_dtype) == 'int16':
+        return torch.short
+    elif str(np_dtype) == 'int':
+        return torch.int
+    elif str(np_dtype) == 'int32':
+        return torch.long
+    else:
+        return None

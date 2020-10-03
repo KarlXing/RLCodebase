@@ -9,6 +9,7 @@ from argparse import ArgumentParser
 parser = ArgumentParser()
 parser.add_argument('--game', default='BreakoutNoFrameskip-v4', type=str)
 parser.add_argument('--seed', default=0, type=int)
+parser.add_argument('--replay-on-gpu', default=False, action='store_true')
 args = parser.parse_args()
 
 def main():
@@ -25,6 +26,7 @@ def main():
     config.max_grad_norm = 5
     config.replay_size = int(1e5)
     config.replay_batch = 32
+    config.replay_on_gpu = args.replay_on_gpu
     config.exploration_threshold_start = 1
     config.exploration_threshold_end = 0.01
     config.exploration_steps = int(1e6)

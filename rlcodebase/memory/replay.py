@@ -17,18 +17,18 @@ class Replay:
 
     def add(self, data):
         for k,v in data.items():
-            getattr(self, k)[self.pos] = to_numpy(v).copy()
+            getattr(self, k)[self.pos].copy_(v)
         self.pos = (self.pos + 1) % self.replay_size
         self.current_size = min(self.current_size+1, self.replay_size)
 
     def reset(self):
         self.pos = 0
-        self.s = np.zeros((self.replay_size, self.num_envs) + self.obs_shape, dtype=self.obs_space.dtype)
-        self.next_s = np.zeros((self.replay_size, self.num_envs) + self.obs_shape, dtype=self.obs_space.dtype)
+        self.s = torch.zeros((self.replay_size, self.num_envs) + self.obs_shape, dtype=convert_dtype(self.obs_space.dtype)).to(self.device)
+        self.next_s = torch.zeros((self.replay_size, self.num_envs) + self.obs_shape, dtype=convert_dtype(self.obs_space.dtype)).to(self.device)
         if self.discrete_action:
-            self.a = np.zeros((self.replay_size, self.num_envs), dtype=np.float32)
+            self.a = torch.zeros((self.replay_size, self.num_envs), dtype=torch.float).to(self.device)
         else:
-            self.a = np.zeros((self.replay_size, self.num_envs, self.action_dim), dtype=np.float32)
-        self.r = np.zeros((self.replay_size, self.num_envs), dtype=np.float32)
-        self.d = np.zeros((self.replay_size, self.num_envs), dtype=np.float32)
-        self.v = np.zeros((self.replay_size, self.num_envs), dtype=np.float32)
+            self.a = torch.zeros((self.replay_size, self.num_envs, self.action_dim), dtype=torch.float).to(self.device)
+        self.r = torch.zeros((self.replay_size, self.num_envs), dtype=torch.float).to(self.device)
+        self.d = torch.zeros((self.replay_size, self.num_envs), dtype=torch.float).to(self.device)
+        self.v = torch.zeros((self.replay_size, self.num_envs), dtype=torch.float).to(self.device)
