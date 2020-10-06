@@ -38,12 +38,12 @@ python example_a2c.py
 * SAC
 
 ## Results
-### Atari Games 
-<p float="left">
-  <img src="imgs/Seaquest.png" width="300" />
-  <img src="imgs/Breakout.png" width="300" /> 
-  <img src="imgs/Qbert.png" width="300" />
-</p>
+### PPO & A2C In Atari Games
+<img src="https://github.com/KarlXing/RLCodebase/blob/master/imgs/A2C&PPO.png">
+
+### DDPG & TD3 & SAC In Pybullet Environments
+<img src="https://github.com/KarlXing/RLCodebase/blob/master/imgs/DDPG&TD3&SAC.png.png">
+
 
 ## Citation
 Please use the bibtex below if you want to cite this repository in your publications:
