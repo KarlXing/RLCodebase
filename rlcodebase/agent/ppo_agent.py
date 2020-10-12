@@ -67,7 +67,6 @@ class PPOAgent(BaseAgent):
             self.rollout_filled = 0
             self.storage.reset()
 
-
     def save(self):
         torch.save(self.policy.model.state_dict(), os.path.join(self.config.save_path, '%d-model.pt' % self.done_steps))
 

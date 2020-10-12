@@ -25,7 +25,8 @@ class Config:
         self.sac = self.general_rl_config + temp_config + self.general_exp_config
 
         temp_config = ['replay_size', 'replay_batch', 'replay_on_gpu',  'exploration_threshold_start', 'exploration_threshold_end', 'exploration_steps', 'target_update_interval', 'learning_start']
-        self.dqn = self.general_rl_config + temp_config + self.general_exp_config
+        per_config = ['use_per', 'per_alpha', 'per_beta_start', 'per_beta_end', 'per_eps', 'per_max_p']
+        self.dqn = self.general_rl_config + temp_config + self.general_exp_config + per_config
 
 
         # set default attributes of config from default parser
@@ -172,6 +173,24 @@ def init_parser():
     parser.add_argument('--learning-start',
                         default=int(5e4), type=int,
                         help='the number of steps before the start of learning')
+    parser.add_argument('--use-per',
+                        default=False, action='store_true',
+                        help='use prioritized experience replay or not')
+    parser.add_argument('--per-alpha',
+                        default=0.5, type=float,
+                        help='alpha for priority calculation in PER')
+    parser.add_argument('--per-beta-start',
+                        default=0.4, type=float,
+                        help='the initial value of beta in importance sampling of PER')
+    parser.add_argument('--per-beta-end',
+                        default=1, type=float,
+                        help='the final value of beta in importance sampling of PER')
+    parser.add_argument('--per-eps',
+                        default=0.01, type=float,
+                        help='the small value added to td error in priority calculation')
+    parser.add_argument('--per-max-p',
+                        default=1, type=float,
+                        help='the maximum priority in PER')
 
 
     # General Experiment Config

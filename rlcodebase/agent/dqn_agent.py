@@ -4,7 +4,7 @@ import random
 import numpy as np
 
 from .base_agent import BaseAgent
-from ..memory import Replay 
+from ..memory import Replay, PrioritizedReplay
 from ..utils import to_numpy, to_tensor, convert_2dindex, get_threshold
 from ..policy import DQNPolicy
 
@@ -23,7 +23,19 @@ class DQNAgent(BaseAgent):
         self.eval_env = eval_env
         self.state = to_tensor(env.reset(), config.device)
         self.logger = logger
-        self.storage = Replay(config.replay_size, config.num_envs, env.observation_space, env.action_space, config.replay_device)
+        if self.config.use_per:
+            self.storage = PrioritizedReplay(config.replay_size, 
+                                             config.num_envs, 
+                                             env.observation_space, 
+                                             env.action_space, 
+                                             config.replay_device,
+                                             config.per_max_p,
+                                             config.per_alpha,
+                                             config.per_eps,
+                                             config.per_beta_start,
+                                             config.per_beta_end)
+        else:
+            self.storage = Replay(config.replay_size, config.num_envs, env.observation_space, env.action_space, config.replay_device)
         self.sample_keys = ['s', 'a', 'r', 'd', 'next_s']
 
     def step(self):
@@ -49,23 +61,21 @@ class DQNAgent(BaseAgent):
         self.state = to_tensor(next_state, self.config.device)
 
         if self.done_steps > self.config.learning_start:
-            indices = random.sample(list(range(self.storage.current_size * self.config.num_envs)), self.config.replay_batch)
-            batch = self.sample(indices)
-            loss = self.policy.learn_on_batch(batch)
+            batch = self.storage.sample(self.config.replay_batch, self.sample_keys, self.config.device)
+            loss, td_error = self.policy.learn_on_batch(batch)
             self.logger.add_scalar(['q_loss'], loss, self.done_steps)
+            self.logger.add_scalar(['td_error'], [td_error.mean().item()], self.done_steps)
+            if self.config.use_per:
+                self.storage.update_p(batch['indices'], td_error)
 
         if self.done_steps % self.config.target_update_interval == 0:
             self.policy.update_target()
 
+        if self.config.use_per:
+            self.storage.update_beta(self.config.max_steps, self.done_steps)
+
     def save(self):
         torch.save(self.policy.model.state_dict(), os.path.join(self.config.save_path, '%d-model.pt' % self.done_steps))
-
-    def sample(self, indices):
-        i1, i2 = convert_2dindex(indices, self.config.num_envs)
-        batch = {}
-        for k in self.sample_keys:
-            batch[k] = to_tensor(getattr(self.storage, k)[i1, i2], self.config.device)
-        return batch
 
     def eval(self):
         eval_returns = []

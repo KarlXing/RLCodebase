@@ -48,20 +48,12 @@ class SACAgent(BaseAgent):
 
         if self.done_steps > self.config.warmup_steps:
             for i in range(self.config.num_envs):
-                indices = random.sample(list(range(self.storage.current_size * self.config.num_envs)), self.config.replay_batch)
-                batch = self.sample(indices)
+                batch = self.storage.sample(self.config.replay_batch, self.sample_keys, self.config.device)
                 loss = self.policy.learn_on_batch(batch)
                 self.logger.add_scalar(['action_loss_entropy', 'action_loss_q', 'value_loss', 'alpha'], loss, self.done_steps+i)
 
     def save(self):
         torch.save(self.policy.model.state_dict(), os.path.join(self.config.save_path, '%d-model.pt' % self.done_steps))
-
-    def sample(self, indices):
-        i1, i2 = convert_2dindex(indices, self.config.num_envs)
-        batch = {}
-        for k in self.sample_keys:
-            batch[k] = to_tensor(getattr(self.storage, k)[i1, i2], self.config.device)
-        return batch
 
     def eval(self):
         eval_returns = []

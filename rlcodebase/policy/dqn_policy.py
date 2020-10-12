@@ -29,6 +29,7 @@ class DQNPolicy(BasePolicy):
 
     def learn_on_batch(self, batch):
         state, action, next_state, reward, done = batch['s'], batch['a'], batch['next_s'], batch['r'], batch['d']
+        weights = batch['weights'] if 'weights' in batch else torch.ones_like(reward).unsqueeze(-1)
         action = action.long()
 
         # update q net
@@ -36,7 +37,8 @@ class DQNPolicy(BasePolicy):
             target_q = self.target_model(next_state).max(1)[0] * (1-done) + reward
         q = self.model(state)
         q = q.gather(1, action.unsqueeze(-1)).squeeze(-1)
-        q_loss = F.mse_loss(q, target_q)
+        q_loss = ((q - target_q).pow(2)*weights).mean()
+        td_error = torch.abs(q.detach() - target_q.detach()) # used in prioritized experience replay
 
         self.q_optimizer.zero_grad()
         q_loss.backward()
@@ -44,7 +46,7 @@ class DQNPolicy(BasePolicy):
             nn.utils.clip_grad_norm_(self.model.q_params, self.max_grad_norm)
         self.q_optimizer.step()
 
-        return [q_loss.item()]
+        return [q_loss.item()], td_error
 
     def update_target(self):
         for target_param, param in zip(self.target_model.parameters(), self.model.parameters()):

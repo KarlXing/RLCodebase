@@ -10,6 +10,7 @@ parser = ArgumentParser()
 parser.add_argument('--game', default='BreakoutNoFrameskip-v4', type=str)
 parser.add_argument('--seed', default=0, type=int)
 parser.add_argument('--replay-on-gpu', default=False, action='store_true')
+parser.add_argument('--use-per', default=False, action='store_true')
 args = parser.parse_args()
 
 def main():
@@ -17,7 +18,7 @@ def main():
     config = Config()
     config.game = 'BreakoutNoFrameskip-v4'
     config.algo = 'dqn'
-    config.max_steps = int(2e7)
+    config.max_steps = int(1e7)
     config.num_envs = 4
     config.optimizer = 'RMSprop'
     config.lr = 0.00025

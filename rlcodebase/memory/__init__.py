@@ -1,2 +1,2 @@
 from .rollout import Rollout
-from .replay import Replay
+from .replay import Replay, PrioritizedReplay
