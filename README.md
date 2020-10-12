@@ -42,7 +42,7 @@ python example_a2c.py
 <img src="https://github.com/KarlXing/RLCodebase/blob/master/imgs/A2C&PPO.png">
 
 ### DDPG & TD3 & SAC In Pybullet Environments
-<img src="https://github.com/KarlXing/RLCodebase/blob/master/imgs/DDPG&TD3&SAC.png.png">
+<img src="https://github.com/KarlXing/RLCodebase/blob/master/imgs/DDPG&TD3&SAC.png">
 
 
 ## Citation
