@@ -30,7 +30,7 @@ python example_a2c.py
 ````
 
 ## Supported Algorithms
-* DQN
+* DQN (PER)
 * A2C
 * PPO
 * DDPG
@@ -42,8 +42,10 @@ python example_a2c.py
 <img src="https://github.com/KarlXing/RLCodebase/blob/master/imgs/A2C&PPO.png">
 
 ### DDPG & TD3 & SAC In Pybullet Environments
-<img src="https://github.com/KarlXing/RLCodebase/blob/master/imgs/DDPG&TD3&SAC.png">
+<img src="https://github.com/KarlXing/RLCodebase/blob/master/imgs/DDPG&TD3&SAC.png" height="80%">
 
+### DQN & DQN+PER In PongNoFrameskip-v4
+<img src="https://github.com/KarlXing/RLCodebase/blob/master/imgs/DQN&DQN+PER.png" hidden="50%">
 
 ## Citation
 Please use the bibtex below if you want to cite this repository in your publications:

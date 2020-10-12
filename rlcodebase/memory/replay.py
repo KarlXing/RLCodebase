@@ -34,7 +34,7 @@ class Replay:
         self.v = torch.zeros((self.buffer_size, self.num_envs), dtype=torch.float).to(self.device)
 
     def sample(self, sample_size, sample_keys, device):
-        indices = random.sample(list(range(self.current_size * self.num_envs)), sample_size)
+        indices = random.sample(range(self.current_size * self.num_envs), sample_size)
         i1, i2 = convert_2dindex(indices, self.num_envs)
         batch = {}
         for k in sample_keys:
