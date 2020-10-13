@@ -107,14 +107,11 @@ class PrioritizedReplay(Replay):
             td_error = td_error.cpu().numpy()
         
         priority = (td_error + self.eps)**(self.alpha)
-
         for data_idx, p in zip(indices, priority):
-            self.tree.update(data_idx, min(p, self.max_p))
+            self.tree.update(data_idx, p)
+
+        self.max_p = max(priority.max(), self.max_p)
 
     def update_beta(self, max_steps, done_steps):
         self.beta = self.beta_start + (self.beta_end - self.beta_start) * done_steps / max_steps
-
-
-
-
 
