@@ -35,6 +35,7 @@ class TD3Policy(BasePolicy):
 
     def learn_on_batch(self, batch, action_limit):
         state, action, next_state, reward, done = batch['s'], batch['a'], batch['next_s'], batch['r'].unsqueeze(-1), batch['d'].unsqueeze(-1)
+        weights = batch['weights'] if 'weights' in batch else torch.ones_like(reward).unsqueeze(-1)
 
         # update critic
         with torch.no_grad():
@@ -46,7 +47,9 @@ class TD3Policy(BasePolicy):
             target_q1, target_q2 = self.target_model.value(next_state, next_action)
             target_q = (torch.min(target_q1, target_q2) * (1-done) * self.discount + reward).detach()
         q1, q2 = self.model.value(state, action)
-        q_loss = (q1 - target_q).pow(2).mean() + (q2 - target_q).pow(2).mean()
+        q_loss = ((q1 - target_q).pow(2)*weights).mean() + ((q2 - target_q).pow(2)*weights).mean()
+
+        td_error = torch.abs(q1 - target_q).detach() + torch.abs(q2 - target_q).detach()
 
         self.critic_optimizer.zero_grad()
         q_loss.backward()
@@ -57,7 +60,7 @@ class TD3Policy(BasePolicy):
         if self.update_count % self.policy_delay == 0:
             a = self.model.act(state)
             q1 = self.model.value(state, a)[0]
-            a_loss = -q1.mean()
+            a_loss = -(q1*weights).mean()
 
             self.actor_optimizer.zero_grad()
             a_loss.backward()
@@ -67,7 +70,7 @@ class TD3Policy(BasePolicy):
         self.soft_update()
         self.update_count += 1
 
-        return a_loss.item() if a_loss is not None else None, q_loss.item()
+        return [a_loss.item() if a_loss is not None else None, q_loss.item()], td_error
 
 
     def soft_update(self):

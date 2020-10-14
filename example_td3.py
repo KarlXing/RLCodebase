@@ -10,6 +10,7 @@ import pybullet_envs
 parser = ArgumentParser()
 parser.add_argument('--game', default='HalfCheetah-v2', type=str)
 parser.add_argument('--seed', default=0, type=int)
+parser.add_argument('--use-per', default=False, action='store_true')
 args = parser.parse_args()
 
 def main():
@@ -38,7 +39,7 @@ def main():
 
     # update config with argparse object (pass game and seed from command line)
     config.update(args)
-    config.tag = '%s-%s-%d' % (config.game, config.algo, config.seed)
+    config.tag = '%s-%s-%d-%s' % (config.game, config.algo, config.seed, 'per' if config.use_per else 'uniform')
     config.after_set()
     print(config)
 

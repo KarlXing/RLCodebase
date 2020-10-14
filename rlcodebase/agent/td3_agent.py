@@ -4,7 +4,7 @@ import random
 import numpy as np
 
 from .base_agent import BaseAgent
-from ..memory import Replay 
+from ..memory import Replay, PrioritizedReplay
 from ..utils import to_numpy, to_tensor, convert_2dindex
 from ..policy import TD3Policy
 
@@ -25,7 +25,19 @@ class TD3Agent(BaseAgent):
         self.eval_env = eval_env
         self.state = to_tensor(env.reset(), config.device)
         self.logger = logger
-        self.storage = Replay(config.replay_size, config.num_envs, env.observation_space, env.action_space, config.replay_device)
+        if config.use_per:
+            self.storage = PrioritizedReplay(config.replay_size, 
+                                             config.num_envs, 
+                                             env.observation_space, 
+                                             env.action_space, 
+                                             config.replay_device,
+                                             config.per_max_p,
+                                             config.per_alpha,
+                                             config.per_eps,
+                                             config.per_beta_start,
+                                             config.per_beta_end)        
+        else:
+            self.storage = Replay(config.replay_size, config.num_envs, env.observation_space, env.action_space, config.replay_device)
         self.sample_keys = ['s', 'a', 'r', 'd', 'next_s']
         self.action_limit = {'high':self.env.action_space.high[0], 'low':self.env.action_space.low[0]}
 
@@ -50,8 +62,14 @@ class TD3Agent(BaseAgent):
         if self.done_steps > self.config.warmup_steps:
             for i in range(self.config.num_envs):
                 batch = self.storage.sample(self.config.replay_batch, self.sample_keys, self.config.device)
-                loss = self.policy.learn_on_batch(batch, self.action_limit)
+                loss, td_error = self.policy.learn_on_batch(batch, self.action_limit)
                 self.logger.add_scalar(['action_loss', 'value_loss'], loss, self.done_steps+i)
+                self.logger.add_scalar(['td_error'], [td_error.mean().item()], self.done_steps)
+                if self.config.use_per:
+                    self.storage.update_p(batch['indices'], td_error)
+
+        if self.config.use_per:
+            self.storage.update_beta(self.config.max_steps, self.done_steps)
 
     def save(self):
         torch.save(self.policy.model.state_dict(), os.path.join(self.config.save_path, '%d-model.pt' % self.done_steps))

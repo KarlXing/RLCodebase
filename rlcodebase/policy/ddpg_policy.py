@@ -45,7 +45,7 @@ class DDPGPolicy(BasePolicy):
         # update policy
         a = self.model.act(state)
         q = self.model.value(state, a)
-        a_loss = -q.mean()
+        a_loss = -(q*weights).mean()
 
         self.actor_optimizer.zero_grad()
         a_loss.backward()

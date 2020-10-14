@@ -36,7 +36,7 @@ def main():
 
     # update config with argparse object (pass game and seed from command line)
     config.update(args)
-    config.tag = '%s-%s-%d' % (config.game, config.algo, config.seed)
+    config.tag = '%s-%s-%d-%s' % (config.game, config.algo, config.seed, 'per' if config.use_per else 'uniform')
     config.after_set()
     print(config)
 
