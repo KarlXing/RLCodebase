@@ -115,3 +115,11 @@ class PrioritizedReplay(Replay):
     def update_beta(self, max_steps, done_steps):
         self.beta = self.beta_start + (self.beta_end - self.beta_start) * done_steps / max_steps
 
+
+    def sample_uniform(self, sample_size, sample_keys, device):
+        indices = random.sample(range(self.current_size * self.num_envs), sample_size)
+        i1, i2 = convert_2dindex(indices, self.num_envs)
+        batch = {}
+        for k in sample_keys:
+            batch[k] = to_tensor(getattr(self, k)[i1, i2], device)
+        return batch

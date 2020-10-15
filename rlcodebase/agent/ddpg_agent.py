@@ -58,12 +58,23 @@ class DDPGAgent(BaseAgent):
 
         if self.done_steps > self.config.warmup_steps:
             for i in range(self.config.num_envs):
-                batch = self.storage.sample(self.config.replay_batch, self.sample_keys, self.config.device)
-                loss, td_error = self.policy.learn_on_batch(batch)
-                self.logger.add_scalar(['action_loss', 'value_loss'], loss, self.done_steps+i)
-                self.logger.add_scalar(['td_error'], [td_error.mean().item()], self.done_steps)
-                if self.config.use_per:
+                if not self.config.use_per:
+                    batch = self.storage.sample(self.config.replay_batch, self.sample_keys, self.config.device)
+                    loss, td_error = self.policy.learn_on_batch(batch)
+                    self.logger.add_scalar(['action_loss', 'value_loss'], loss, self.done_steps+i)
+                    self.logger.add_scalar(['td_error'], [td_error.mean().item()], self.done_steps)
+                else:
+                    batch = self.storage.sample(self.config.replay_batch, self.sample_keys, self.config.device)
+                    loss, td_error = self.policy.learn_critic_on_batch(batch)
+                    self.logger.add_scalar(['value_loss'], loss, self.done_steps+i)
+                    self.logger.add_scalar(['td_error'], [td_error.mean().item()], self.done_steps) 
                     self.storage.update_p(batch['indices'], td_error)
+
+                    batch = self.storage.sample_uniform(self.config.replay_batch, self.sample_keys, self.config.device)
+                    loss = self.policy.learn_actor_on_batch(batch)
+                    self.logger.add_scalar(['action_loss'], loss, self.done_steps+i)    
+
+                    self.policy.soft_update()
         
         if self.config.use_per:
             self.storage.update_beta(self.config.max_steps, self.done_steps)

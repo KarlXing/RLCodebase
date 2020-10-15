@@ -57,6 +57,40 @@ class DDPGPolicy(BasePolicy):
         return [a_loss.item(), q_loss.item()], td_error
 
 
+    def learn_critic_on_batch(self, batch):
+        state, action, next_state, reward, done = batch['s'], batch['a'], batch['next_s'], batch['r'].unsqueeze(-1), batch['d'].unsqueeze(-1)
+        weights = batch['weights'] if 'weights' in batch else torch.ones_like(reward).unsqueeze(-1)
+ 
+        # update critic
+        with torch.no_grad():
+            next_action = self.target_model.act(next_state)
+            target_q = (self.target_model.value(next_state, next_action) * (1-done) * self.discount + reward).detach()
+        q = self.model.value(state, action)
+        q_loss = ((q - target_q).pow(2)*weights).mean()
+        td_error = torch.abs(q.detach() - target_q.detach())
+
+        self.critic_optimizer.zero_grad()
+        q_loss.backward()
+        self.critic_optimizer.step()
+
+
+        return [q_loss.item()], td_error
+
+    def learn_actor_on_batch(self, batch):
+        state, action, next_state, reward, done = batch['s'], batch['a'], batch['next_s'], batch['r'].unsqueeze(-1), batch['d'].unsqueeze(-1)
+ 
+        # update policy
+        a = self.model.act(state)
+        q = self.model.value(state, a)
+        a_loss = -(q).mean()
+
+        self.actor_optimizer.zero_grad()
+        a_loss.backward()
+        self.actor_optimizer.step()
+
+        return [a_loss.item()]
+
+
     def soft_update(self):
         for target_param, param in zip(self.target_model.parameters(), self.model.parameters()):
             target_param.detach_()
