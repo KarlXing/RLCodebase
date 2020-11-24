@@ -3,16 +3,30 @@ from collections import deque
 
 
 class Logger:
-    def __init__(self, writer, num_echo_episodes):
+    def __init__(self, writer, num_echo_episodes, episodes_avg_window = -1):
         self.writer = writer
         assert(num_echo_episodes >= 0)
         self.last_rewards = deque(maxlen=num_echo_episodes)
+        self.episodes_avg_window = episodes_avg_window
+        self.window_rewards = []
+        self.window_end = self.episodes_avg_window
 
     def save_episodic_return(self, infos, done_steps):
         for (i, info) in enumerate(infos):
             if info['episodic_return'] is not None:
-                if self.writer is not None:
-                    self.writer.add_scalar('episodic_return', info['episodic_return'], done_steps+i)
+                global_step = done_steps + i
+                # save each episode return or save average episodic return in windows
+                if self.episodes_avg_window == -1:
+                    if self.writer is not None:
+                        self.writer.add_scalar('episodic_return', info['episodic_return'], done_steps+i)
+                else:
+                    if global_step < self.window_end:
+                        self.window_rewards.append(info['episodic_return']) 
+                    else:
+                        if self.writer is not None and len(self.window_rewards) != 0:
+                            self.writer.add_scalar('episodic_return', np.mean(self.window_rewards), self.window_end)
+                        self.window_rewards = [info['episodic_return']]
+                        self.window_end = (global_step // self.episodes_avg_window + 1) * self.episodes_avg_window
                 self.last_rewards.append(info['episodic_return'])
 
     def print_last_rewards(self):

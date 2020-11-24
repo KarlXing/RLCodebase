@@ -7,7 +7,7 @@ class Config:
     def __init__(self):
         self.general_rl_config = ['algo', 'game', 'max_steps', 'num_envs', 'num_frame_stack', 'optimizer', 'lr', 'discount', 
                                   'use_gae', 'gae_lambda', 'use_grad_clip', 'max_grad_norm']
-        self.general_exp_config = ['echo_interval', 'num_echo_episodes', 'save_interval', 'save_path', 'intermediate_eval','eval_interval', 'eval_episodes', 'use_gpu', 'seed', 'tag']
+        self.general_exp_config = ['echo_interval', 'num_echo_episodes', 'log_episodes_avg_window', 'save_interval', 'save_path', 'intermediate_eval','eval_interval', 'eval_episodes', 'use_gpu', 'seed', 'tag']
 
         temp_config = ['value_loss_coef', 'entropy_coef', 'rollout_length', 'ppo_epoch', 'ppo_clip_param', 'num_mini_batch', 'target_kl']
         self.ppo = self.general_rl_config + temp_config + self.general_exp_config
@@ -200,6 +200,9 @@ def init_parser():
     parser.add_argument('--num-echo-episodes',
                         default=20, type=int,
                         help='the number of recent episodes whose episodic return will be averaged and then printed')
+    parser.add_argument('--log-episodes-avg-window',
+                        default=-1, type=int, 
+                        help='log the average episodic return within each window of global steps. -1 means log every episodic return')
     parser.add_argument('--save-interval',
                         default=None, type=int,
                         help='number of steps between two saving')
