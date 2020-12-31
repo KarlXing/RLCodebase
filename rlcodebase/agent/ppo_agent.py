@@ -19,14 +19,21 @@ class PPOAgent(BaseAgent):
                                 config.entropy_coef,
                                 config.ppo_clip_param,
                                 config.use_grad_clip,
-                                config.max_grad_norm)
+                                config.max_grad_norm,
+                                config.use_value_clip)
         self.env = env
         self.state = to_tensor(env.reset(), config.device)
         self.logger = logger
         self.storage = Rollout(config.rollout_length, config.num_envs, env.observation_space, env.action_space, config.device)
-        self.sample_keys = ['s', 'a', 'log_prob', 'ret', 'adv']
+        self.sample_keys = ['s', 'a', 'log_prob', 'ret', 'adv', 'v']
         self.rollout_filled = 0
-        self.mini_batch_size = config.rollout_length * config.num_envs // config.num_mini_batch
+        self.batch_size = config.rollout_length * config.num_envs // config.num_mini_batch
+        self.mini_batch_size = config.mini_batch_size
+        if self.batch_size < self.mini_batch_size:
+            self.mini_batch_size = self.batch_size
+        self.gradient_accumulation_steps = self.batch_size // self.mini_batch_size
+        self.gradient_accumulation_cnt = 0
+        print('size', self.batch_size, self.mini_batch_size, self.gradient_accumulation_steps)
 
     def step(self):
         with torch.no_grad():
@@ -58,7 +65,9 @@ class PPOAgent(BaseAgent):
                 self.policy.approx_kl = []
                 for indices in sampler:
                     batch = self.sample(indices)
-                    loss = self.policy.learn_on_batch(batch)
+                    self.gradient_accumulation_cnt += 1
+                    accumulation = self.gradient_accumulation_cnt % self.gradient_accumulation_steps != 0
+                    loss = self.policy.learn_on_batch(batch, accumulation)
                     mqueue.add(loss)
                 if self.config.target_kl is not None and np.mean(self.policy.approx_kl) > 1.5 * self.config.target_kl:
                     break

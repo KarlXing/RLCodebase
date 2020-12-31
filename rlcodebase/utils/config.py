@@ -9,7 +9,7 @@ class Config:
                                   'use_gae', 'gae_lambda', 'use_grad_clip', 'max_grad_norm']
         self.general_exp_config = ['echo_interval', 'num_echo_episodes', 'log_episodes_avg_window', 'save_interval', 'save_path', 'intermediate_eval','eval_interval', 'eval_episodes', 'use_gpu', 'seed', 'tag']
 
-        temp_config = ['value_loss_coef', 'entropy_coef', 'rollout_length', 'ppo_epoch', 'ppo_clip_param', 'num_mini_batch', 'target_kl']
+        temp_config = ['value_loss_coef', 'entropy_coef', 'rollout_length', 'ppo_epoch', 'ppo_clip_param', 'use_value_clip', 'num_mini_batch', 'mini_batch_size', 'target_kl']
         self.ppo = self.general_rl_config + temp_config + self.general_exp_config
 
         temp_config = ['value_loss_coef', 'entropy_coef', 'rollout_length']
@@ -116,15 +116,21 @@ def init_parser():
     parser.add_argument('--ppo-clip-param',
                         default=0.1, type=float,
                         help='PPO: clip parameter')
+    parser.add_argument('--use-value-clip',
+                        default=False, action='store_true',
+                        help='PPO: clip critic values or not (the clip parameter is the same as ppo policy clip parameter)')
     parser.add_argument('--ppo-epoch',
                         default=4, type=int,
                         help='PPO: number of epochs')
     parser.add_argument('--target-kl',
                         default=None, type=float,
-                        help='avoid training in PPO if kl divergence between the current dist and original dist goes beyond target_kl')
+                        help='skip training in PPO if kl divergence between the current dist and original dist goes beyond target_kl')
     parser.add_argument('--num-mini-batch',
                         default=4, type=int,
                         help='PPO: number of mini batches in each epco, mini_batch_size = num_envs * rollout_length / num_mini_batch')
+    parser.add_argument('--mini-batch-size',
+                        default=2048, type=int,
+                        help='PPO: maximum size of one batch of data, if the desired batch size is bigger than mini_batch_size, then gradients accumulation is used')
     parser.add_argument('--replay-size',
                         default=int(1e6), type=int,
                         help='replay memory size for off policy algos')
