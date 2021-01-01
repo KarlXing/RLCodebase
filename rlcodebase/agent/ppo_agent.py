@@ -33,7 +33,6 @@ class PPOAgent(BaseAgent):
             self.mini_batch_size = self.batch_size
         self.gradient_accumulation_steps = self.batch_size // self.mini_batch_size
         self.gradient_accumulation_cnt = 0
-        print('size', self.batch_size, self.mini_batch_size, self.gradient_accumulation_steps)
 
     def step(self):
         with torch.no_grad():
