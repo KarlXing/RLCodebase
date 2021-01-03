@@ -63,8 +63,8 @@ def make_vec_envs_procgen(env_name, num_envs, start_level=0, num_levels=0, distr
                      distribution_mode=distribution_mode)
     env = VecExtractDictTransposedObs(env, 'rgb')
     env = VecFrameStack(env, num_frame_stack)
+    env = VecMonitor(env)
     env = VecNormalize(env, obs=normalize_obs, ret=normalize_ret)
-    env = VecMonitor(env)    
     return env
 
 

@@ -2,4 +2,5 @@ matplotlib
 atari-py
 Box2D
 pybullet
+procgen
 git+git://github.com/karlxing/baselines.git@3d43411#egg=baselines

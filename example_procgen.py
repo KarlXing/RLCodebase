@@ -27,7 +27,7 @@ def main():
     config.num_envs = args.num_envs
     config.optimizer = 'Adam'
     config.lr = 0.0005
-    config.discount = 0.99
+    config.discount = 0.999
     config.use_gae = True
     config.gae_lambda = 0.95
     config.use_grad_clip = True
@@ -35,7 +35,7 @@ def main():
     config.rollout_length = 256
     config.value_loss_coef = 0.5
     config.entropy_coef = 0.01
-    config.ppo_epoch = 4
+    config.ppo_epoch = 3
     config.ppo_clip_param = 0.2
     config.num_mini_batch = 8
     config.mini_batch_size = args.mini_batch_size
