@@ -27,7 +27,7 @@ def main():
     config.max_grad_norm = 5
     config.replay_size = int(1e5)
     config.replay_batch = 32
-    config.replay_on_gpu = args.replay_on_gpu
+    config.replay_on_gpu = False
     config.exploration_threshold_start = 1
     config.exploration_threshold_end = 0.01
     config.exploration_steps = int(1e6)
@@ -38,6 +38,7 @@ def main():
     config.use_gpu = True
     config.num_frame_stack = 4
     config.seed = 0
+    config.log_episodes_avg_window = 10000
 
     # update config with argparse object (pass game and seed from command line)
     config.update(args)
@@ -50,7 +51,7 @@ def main():
     eval_env = make_vec_envs(config.game, num_envs = 1, seed = config.seed, num_frame_stack= config.num_frame_stack)
     model = CatQConvNet(input_channels = env.observation_space.shape[0], action_dim = get_action_dim(env.action_space)).to(config.device)
     target_model = CatQConvNet(input_channels = env.observation_space.shape[0], action_dim = get_action_dim(env.action_space)).to(config.device)
-    logger =  Logger(SummaryWriter(config.save_path), config.num_echo_episodes)
+    logger =  Logger(SummaryWriter(config.save_path), config.num_echo_episodes, config.log_episodes_avg_window)
 
     # create agent and run
     agent = DQNAgent(config, env, eval_env, model, target_model, logger)

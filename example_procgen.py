@@ -21,10 +21,10 @@ args = parser.parse_args()
 def main():
     # create config
     config = Config()
-    config.game = args.game
+    config.game = 'starpilot'
     config.algo = 'ppo'
     config.max_steps = int(1e8)
-    config.num_envs = args.num_envs
+    config.num_envs = 256
     config.optimizer = 'Adam'
     config.lr = 0.0005
     config.discount = 0.999
@@ -38,9 +38,9 @@ def main():
     config.ppo_epoch = 3
     config.ppo_clip_param = 0.2
     config.num_mini_batch = 8
-    config.mini_batch_size = args.mini_batch_size
+    config.mini_batch_size = 2048
     config.use_gpu = True
-    config.num_frame_stack = args.num_frame_stack
+    config.num_frame_stack = 1
 
     # update config with argparse object
     config.update(args)

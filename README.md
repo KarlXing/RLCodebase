@@ -1,5 +1,7 @@
 # RLCodebase
-RLCodebase is a modularized codebase for deep reinforcement learning algorithms. This repo aims to provide an user-friendly reinforcement learning codebase for beginners to get started and for researchers to try their ideas quickly and efficiently. 
+RLCodebase is a modularized codebase for deep reinforcement learning algorithms based on PyTorch. This repo aims to provide an user-friendly reinforcement learning codebase for beginners to get started and for researchers to try their ideas quickly and efficiently. 
+
+For now, it has implemented DQN(PER), A2C, PPO, DDPG, TD3 and SAC algorithms, and supports OpenAI Gym and Procgen environments.
 
 ## Introduction
 The design of RLCodebase is shown as below. 
@@ -37,6 +39,12 @@ python example_a2c.py
 * TD3
 * SAC
 
+## Supported Environments (tested)
+* Atari 
+* Mujoco
+* PyBullet
+* Procgen
+
 ## Results
 ### PPO & A2C In Atari Games
 <img src="https://github.com/KarlXing/RLCodebase/blob/master/imgs/A2C&PPO.png">
@@ -45,14 +53,18 @@ python example_a2c.py
 <img src="https://github.com/KarlXing/RLCodebase/blob/master/imgs/DDPG&TD3&SAC.png">
 
 ### DQN & DQN+PER In PongNoFrameskip-v4
-<img src="https://github.com/KarlXing/RLCodebase/blob/master/imgs/DQN&DQN+PER.png" width="400">  
+<img src="https://github.com/KarlXing/RLCodebase/blob/master/imgs/DQN&DQN+PER.png" width="500" class="center">  
+
+### Procgen
+<img src="https://github.com/KarlXing/RLCodebase/blob/master/imgs/starpilot.png" width="500" class="center">  
+
 
 ## Citation
 Please use the bibtex below if you want to cite this repository in your publications:
 ````
 @misc{rlcodebase,
   author = {Jinwei Xing},
-  title = {PyTorch Codebase For Deep Reinforcement Learning Algorithms},
+  title = {RLCodebase: PyTorch Codebase For Deep Reinforcement Learning Algorithms},
   year = {2020},
   publisher = {GitHub},
   journal = {GitHub repository},
@@ -62,7 +74,7 @@ Please use the bibtex below if you want to cite this repository in your publicat
 
 
 ## References for implementation and design
-The design and some parts of implementation of this repo is referred from resources below.
+RLCodebase is inspired by resources below.
 * https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail
 * https://github.com/ShangtongZhang/DeepRL
 * https://github.com/ray-project/ray/tree/master/rllib
