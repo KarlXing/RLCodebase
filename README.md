@@ -46,17 +46,17 @@ python example_a2c.py
 * Procgen
 
 ## Results
-### PPO & A2C In Atari Games
+### 1. PPO & A2C In Atari Games
 <img src="https://github.com/KarlXing/RLCodebase/blob/master/imgs/A2C&PPO.png">
 
-### DDPG & TD3 & SAC In Pybullet Environments
+### 2. DDPG & TD3 & SAC In Pybullet Environments
 <img src="https://github.com/KarlXing/RLCodebase/blob/master/imgs/DDPG&TD3&SAC.png">
 
-### DQN & DQN+PER In PongNoFrameskip-v4
+### 3. DQN & DQN+PER In PongNoFrameskip-v4
 <img src="https://github.com/KarlXing/RLCodebase/blob/master/imgs/DQN&DQN+PER.png" width="500" class="center">  
 
-### Procgen
-<img src="https://github.com/KarlXing/RLCodebase/blob/master/imgs/starpilot.png" width="500" class="center">  
+### 4. Procgen
+<img src="https://github.com/KarlXing/RLCodebase/blob/master/imgs/procgen.png">  
 
 
 ## Citation
