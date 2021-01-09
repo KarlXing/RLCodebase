@@ -20,7 +20,7 @@ class A2CAgent(BaseAgent):
         self.env = env
         self.state = to_tensor(env.reset(), config.device)
         self.logger = logger
-        self.storage = Rollout(config.rollout_length, config.num_envs, env.observation_space, env.action_space, config.device)
+        self.storage = Rollout(config.rollout_length, config.num_envs, env.observation_space, env.action_space, config.memory_device)
         self.sample_keys = ['s', 'a', 'ret', 'adv']
         self.rollout_filled = 0
 
@@ -31,8 +31,8 @@ class A2CAgent(BaseAgent):
         self.rollout_filled += 1
         self.storage.add({'a': action,
                           'v': v, 
-                          'r': to_tensor(rwd, self.config.device),
-                          'd': to_tensor(done, self.config.device),
+                          'r': to_tensor(rwd, self.config.memory_device),
+                          'd': to_tensor(done, self.config.memory_device),
                           's': self.state})
         self.logger.save_episodic_return(info, self.done_steps)
 
@@ -41,7 +41,7 @@ class A2CAgent(BaseAgent):
         if self.rollout_filled == self.config.rollout_length:
             with torch.no_grad():
                 _, _, v, _ = self.policy.inference(self.state)
-            self.storage.compute_return(v, self.config.discount, self.config.use_gae, self.config.gae_lambda)
+            self.storage.compute_return(v.to(self.config.memory_device), self.config.discount, self.config.use_gae, self.config.gae_lambda)
 
             indices = list(range(self.config.rollout_length*self.config.num_envs))
             batch = self.sample(indices)
@@ -58,7 +58,7 @@ class A2CAgent(BaseAgent):
         i1, i2 = convert_2dindex(indices, self.config.num_envs)
         batch = {}
         for k in self.sample_keys:
-            batch[k] = getattr(self.storage, k)[i1, i2]
+            batch[k] = getattr(self.storage, k)[i1, i2].to(self.config.device)
         return batch
 
 

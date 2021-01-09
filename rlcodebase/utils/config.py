@@ -9,22 +9,22 @@ class Config:
                                   'use_gae', 'gae_lambda', 'use_grad_clip', 'max_grad_norm']
         self.general_exp_config = ['echo_interval', 'num_echo_episodes', 'log_episodes_avg_window', 'save_interval', 'save_path', 'intermediate_eval','eval_interval', 'eval_episodes', 'use_gpu', 'seed', 'tag']
 
-        temp_config = ['value_loss_coef', 'entropy_coef', 'rollout_length', 'ppo_epoch', 'ppo_clip_param', 'use_value_clip', 'num_mini_batch', 'mini_batch_size', 'target_kl']
+        temp_config = ['value_loss_coef', 'entropy_coef', 'rollout_length', 'memory_on_gpu', 'ppo_epoch', 'ppo_clip_param', 'use_value_clip', 'num_mini_batch', 'mini_batch_size', 'target_kl']
         self.ppo = self.general_rl_config + temp_config + self.general_exp_config
 
-        temp_config = ['value_loss_coef', 'entropy_coef', 'rollout_length']
+        temp_config = ['value_loss_coef', 'entropy_coef', 'rollout_length', 'memory_on_gpu']
         self.a2c = self.general_rl_config + temp_config + self.general_exp_config
 
-        temp_config = ['replay_size', 'warmup_steps', 'replay_batch', 'replay_on_gpu', 'action_noise', 'soft_update_rate']
+        temp_config = ['replay_size', 'warmup_steps', 'replay_batch', 'memory_on_gpu', 'action_noise', 'soft_update_rate']
         self.ddpg = self.general_rl_config + temp_config + self.general_exp_config
 
-        temp_config = ['replay_size', 'warmup_steps', 'replay_batch', 'replay_on_gpu', 'action_noise', 'soft_update_rate', 'target_noise', 'target_noise_clip', 'policy_delay']
+        temp_config = ['replay_size', 'warmup_steps', 'replay_batch', 'memory_on_gpu', 'action_noise', 'soft_update_rate', 'target_noise', 'target_noise_clip', 'policy_delay']
         self.td3 = self.general_rl_config + temp_config + self.general_exp_config
 
-        temp_config = ['replay_size', 'warmup_steps', 'replay_batch', 'replay_on_gpu', 'sac_alpha', 'automatic_alpha', 'soft_update_rate']
+        temp_config = ['replay_size', 'warmup_steps', 'replay_batch', 'memory_on_gpu', 'sac_alpha', 'automatic_alpha', 'soft_update_rate']
         self.sac = self.general_rl_config + temp_config + self.general_exp_config
 
-        temp_config = ['replay_size', 'replay_batch', 'replay_on_gpu',  'exploration_threshold_start', 'exploration_threshold_end', 'exploration_steps', 'target_update_interval', 'learning_start']
+        temp_config = ['replay_size', 'replay_batch', 'memory_on_gpu',  'exploration_threshold_start', 'exploration_threshold_end', 'exploration_steps', 'target_update_interval', 'learning_start']
         per_config = ['use_per', 'per_alpha', 'per_beta_start', 'per_beta_end', 'per_eps', 'per_max_p']
         self.dqn = self.general_rl_config + temp_config + self.general_exp_config + per_config
 
@@ -43,7 +43,7 @@ class Config:
 
     def after_set(self):
         self.device = torch.device('cuda') if self.use_gpu and torch.cuda.is_available() else torch.device('cpu')
-        self.replay_device = torch.device('cuda') if self.replay_on_gpu and torch.cuda.is_available() else torch.device('cpu')
+        self.memory_device = torch.device('cuda') if self.memory_on_gpu and torch.cuda.is_available() else torch.device('cpu')
 
         if self.save_path == 'default':
             path = '%s-%s-%s' % (self.algo, self.game, time.time())
@@ -140,7 +140,7 @@ def init_parser():
     parser.add_argument('--replay-batch',
                         default=100, type=int,
                         help='batch size of sampled data from replay memory')
-    parser.add_argument('--replay-on-gpu',
+    parser.add_argument('--memory-on-gpu',
                         default=False, action='store_true',
                         help='place replay on gpu or cpu')
     parser.add_argument('--action-noise',
