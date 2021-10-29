@@ -18,12 +18,13 @@ The design of RLCodebase is shown as below.
 All required packages have been included in setup.py and requirements.txt. To install RLCodebase, follow
 ````
 # create virtual env
-conda create -n rlcodebase python=3.6
+conda create -n rlcodebase python=3.8
 conda activate rlcodebase
 
 # install rlcodebase
 git clone git@github.com:KarlXing/RLCodebase.git RLCodebase
 cd RLCodebase
+pip install pip~=20.2  # starting from 20.3, pip takes new dependency resolver which could cause installation failure here
 pip install -e .
 pip install -r requirements.txt  --ignore-installed
 
