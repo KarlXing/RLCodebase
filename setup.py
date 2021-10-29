@@ -8,10 +8,10 @@ setup(name='rlcodebase',
       packages=[package for package in find_packages()
                 if package.startswith('rlcodebase')],
       install_requires=[
-        'torch==1.8.0',
-        'tensorflow==2.5.0',
+        'torch>=1.8.0',
+        'tensorflow==2.5.1',
         'gym==0.20.0',
-        'torchvision==0.9.0',
+        'torchvision>=0.9.0',
         'opencv-python',
         'pandas',
         'pathlib',
