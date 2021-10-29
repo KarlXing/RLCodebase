@@ -20,8 +20,19 @@ def make_env(env_id, seed, rank, custom_wrapper=None):
     def _thunk():
         set_random_seed(seed)
         env = gym.make(env_id)
-        is_atari = hasattr(gym.envs, 'atari') and isinstance(
+        # check is_atari for gym < 0.20
+        is_atari_old = hasattr(gym.envs, 'atari') and isinstance(
             env.unwrapped, gym.envs.atari.atari_env.AtariEnv)
+        
+        # check is_atari for gym >= 0.20, <= 0.21
+        ale_py_installed = True
+        try:
+            import ale_py
+        except ModuleNotFoundError:
+            ale_py_installed = False
+
+        is_atari_new = (ale_py_installed == True) and isinstance(env.unwrapped, ale_py.gym.environment.ALGymEnv)
+        is_atari = is_atari_old or is_atari_new
         if is_atari:
             env = make_atari(env_id)
         env.seed(seed + rank)
