@@ -25,7 +25,7 @@ conda activate rlcodebase
 git clone git@github.com:KarlXing/RLCodebase.git RLCodebase
 cd RLCodebase
 pip install -e .
-pip install -r requirements.txt
+pip install -r requirements.txt  --ignore-installed
 
 # try it
 python example_a2c.py

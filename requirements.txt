@@ -1,6 +1,8 @@
 matplotlib
-atari-py
 Box2D
 pybullet
 procgen
 git+git://github.com/karlxing/baselines.git@3d43411#egg=baselines
+autorom[accept-rom-license] # works with gym==0.20.0
+gym==0.20.0
+ale_py==0.7.0

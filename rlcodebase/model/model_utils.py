@@ -4,7 +4,7 @@ import torch.nn as nn
 
 class Flatten(nn.Module):
     def forward(self, x):
-        return x.view(x.size(0), -1)
+        return x.reshape(x.size(0), -1)
 
 def orthogonal_init(module, gain = 1):
     nn.init.orthogonal_(module.weight.data, gain = gain)
