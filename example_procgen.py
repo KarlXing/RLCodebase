@@ -44,7 +44,8 @@ def main():
 
     # update config with argparse object
     config.update(args)
-    config.tag = '%s-%s' % (config.game, config.algo)
+    # add extra tag to the log/save file name (log/save file name includes game and algo information in default)
+    config.tag = 'seed%d' % (config.seed)
     if args.tag:
         config.tag += '-' + args.tag 
     config.after_set()

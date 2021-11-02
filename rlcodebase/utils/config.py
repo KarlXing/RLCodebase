@@ -1,6 +1,7 @@
 import argparse
 import torch
 import time
+import datetime
 import os
 
 class Config:
@@ -46,7 +47,7 @@ class Config:
         self.memory_device = torch.device('cuda') if self.memory_on_gpu and torch.cuda.is_available() else torch.device('cpu')
 
         if self.save_path == 'default':
-            path = '%s-%s-%s' % (self.algo, self.game, time.time())
+            path = '%s-%s-%s' % (self.algo, self.game, datetime.datetime.fromtimestamp(time.time()).strftime('%d.%m.%Y-%H:%M:%S.%f'))
             if self.tag:
                 path = '-'.join([path, self.tag])
             self.save_path = os.path.join('./runs', path)

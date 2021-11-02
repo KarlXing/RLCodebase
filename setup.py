@@ -15,9 +15,9 @@ setup(name='rlcodebase',
         'opencv-python',
         'pandas',
         'pathlib',
-        'numpy'],
+        'numpy==1.21.3'],
       description="Codebase of Reinforcement Learning Algorithms",
       author="Jinwei Xing",
       url='https://github.com/KarlXing/RLCodebase',
       author_email="jinweixing1006@gmail.com",
-      version="0.1")
+      version="0.3")

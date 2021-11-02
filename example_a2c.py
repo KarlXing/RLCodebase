@@ -32,9 +32,10 @@ def main():
     config.num_frame_stack = 4
     config.seed = 1
 
-    # update config with argparse object (pass game and seed from command line)
+    # update config with argparse object
     config.update(args)
-    config.tag = '%s-%s-%d' % (config.game, config.algo, config.seed)
+    # add extra tag to the log/save file name (log/save file name includes game and algo information in default)
+    config.tag = 'seed%d' % (config.seed)
     config.after_set()
     print(config)
 
