@@ -9,7 +9,7 @@ setup(name='rlcodebase',
                 if package.startswith('rlcodebase')],
       install_requires=[
         'torch>=1.8.0',
-        'tensorflow==2.5.1',
+        'tensorflow==2.5.3',
         'gym==0.20.0',
         'torchvision>=0.9.0',
         'opencv-python',
