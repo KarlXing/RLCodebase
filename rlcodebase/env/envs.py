@@ -12,6 +12,7 @@ from baselines.common.vec_env.dummy_vec_env import DummyVecEnv
 from baselines.common.vec_env.shmem_vec_env import ShmemVecEnv
 from baselines.common.vec_env import VecEnvWrapper, VecEnvObservationWrapper
 from procgen import ProcgenEnv
+import dmc2gym
 
 from ..utils import *
 
@@ -52,6 +53,17 @@ def make_env(env_id, seed, rank, custom_wrapper=None):
 
     return _thunk
 
+def make_env_dmcontrol(domain_name, task_name, seed, rank, from_pixels=False):
+    def _thunk():
+        set_random_seed(seed)
+        env = dmc2gym.make(domain_name=domain_name, task_name=task_name, seed=seed+rank, from_pixels=from_pixels, visualize_reward=False)
+        env.seed(seed + rank)
+        env = OriginalReturnWrapper(env)
+        return env
+
+    return _thunk
+
+
 # vec envs based on openai gym
 def make_vec_envs(env_name, num_envs, seed=1, num_frame_stack=1):
     envs = [make_env(env_name, seed, i) for i in range(num_envs)]
@@ -77,6 +89,19 @@ def make_vec_envs_procgen(env_name, num_envs, start_level=0, num_levels=0, distr
     env = VecMonitor(env)
     env = VecNormalize(env, obs=normalize_obs, ret=normalize_ret)
     return env
+
+# vec envs based on openai gym
+def make_vec_envs_dmcontrol(domain_name, task_name, num_envs, seed=1, from_pixels=False, num_frame_stack=1):
+    envs = [make_env_dmcontrol(domain_name, task_name, seed, i, from_pixels) for i in range(num_envs)]
+
+    if len(envs) > 1:
+        envs = ShmemVecEnv(envs, context='fork')
+    else:
+        envs = DummyVecEnv(envs)
+
+    envs = VecFrameStack(envs, num_frame_stack)
+
+    return envs
 
 
 class OriginalReturnWrapper(gym.Wrapper):
