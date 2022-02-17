@@ -3,7 +3,7 @@ import os
 
 from .base_agent import BaseAgent
 from ..memory import Rollout
-from ..utils.utils import to_tensor, convert_2dindex
+from ..utils.utils import to_tensor, convert_2dindex, update_maxstep_done
 from ..policy.a2c_policy import A2CPolicy
 
 
@@ -28,6 +28,7 @@ class A2CAgent(BaseAgent):
         with torch.no_grad():
             action, log_prob, v, ent = self.policy.inference(self.state)
         next_state, rwd, done, info = self.env.step(action.cpu().numpy())
+        done = update_maxstep_done(info, done, self.env.max_episode_steps)
         self.rollout_filled += 1
         self.storage.add({'a': action,
                           'v': v, 

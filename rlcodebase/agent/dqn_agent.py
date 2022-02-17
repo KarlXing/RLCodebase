@@ -5,7 +5,7 @@ import numpy as np
 
 from .base_agent import BaseAgent
 from ..memory import Replay, PrioritizedReplay
-from ..utils import to_numpy, to_tensor, convert_2dindex, get_threshold
+from ..utils import to_numpy, to_tensor, convert_2dindex, get_threshold, update_maxstep_done
 from ..policy import DQNPolicy
 
 
@@ -51,6 +51,7 @@ class DQNAgent(BaseAgent):
             action = np.where(random_val > self.random_action_threshold, greedy_action, random_action)
 
         next_state, rwd, done, info = self.env.step(action)
+        done = update_maxstep_done(info, done, self.env.max_episode_steps)
         self.storage.add({'s': to_tensor(self.state, self.config.memory_device),
                           'a': to_tensor(action, self.config.memory_device),
                           'r': to_tensor(rwd, self.config.memory_device),

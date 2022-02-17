@@ -4,7 +4,7 @@ from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
 import os
 
 from .base_agent import BaseAgent
-from ..utils import to_tensor, MultiDeque, convert_2dindex
+from ..utils import to_tensor, MultiDeque, convert_2dindex, update_maxstep_done
 from ..policy import PPOPolicy
 from ..memory import Rollout
 
@@ -38,6 +38,7 @@ class PPOAgent(BaseAgent):
         with torch.no_grad():
             action, log_prob, v, ent = self.policy.inference(self.state)
         next_state, rwd, done, info = self.env.step(action.cpu().numpy())
+        done = update_maxstep_done(info, done, self.env.max_episode_steps)
         self.rollout_filled += 1
         self.storage.add({'a': action,
                           'log_prob': log_prob,

@@ -17,27 +17,17 @@ import dmc2gym
 from ..utils import *
 
 
+
 def make_env(env_id, seed, rank, custom_wrapper=None):
     def _thunk():
         set_random_seed(seed)
         env = gym.make(env_id)
-        # check is_atari for gym < 0.20
-        is_atari_old = hasattr(gym.envs, 'atari') and isinstance(
-            env.unwrapped, gym.envs.atari.atari_env.AtariEnv)
-        
-        # check is_atari for gym >= 0.20, <= 0.21
-        ale_py_installed = True
-        try:
-            import ale_py
-        except ModuleNotFoundError:
-            ale_py_installed = False
 
-        is_atari_new = (ale_py_installed == True) and isinstance(env.unwrapped, ale_py.gym.environment.ALGymEnv)
-        is_atari = is_atari_old or is_atari_new
+        is_atari = 'atari' in type(env.unwrapped).__name__.lower()
         if is_atari:
             env = make_atari(env_id)
         env.seed(seed + rank)
-        env = OriginalReturnWrapper(env)
+        env.action_space.seed(seed + rank)
 
         if is_atari:
             env = wrap_deepmind(env)
@@ -53,21 +43,9 @@ def make_env(env_id, seed, rank, custom_wrapper=None):
 
     return _thunk
 
-def make_env_dmcontrol(domain_name, task_name, seed, rank, from_pixels=False):
-    def _thunk():
-        set_random_seed(seed)
-        env = dmc2gym.make(domain_name=domain_name, task_name=task_name, seed=seed+rank, from_pixels=from_pixels, visualize_reward=False)
-        env.seed(seed + rank)
-        env = OriginalReturnWrapper(env)
-        return env
-
-    return _thunk
-
-
 # vec envs based on openai gym
 def make_vec_envs(env_name, num_envs, seed=1, num_frame_stack=1):
     envs = [make_env(env_name, seed, i) for i in range(num_envs)]
-
     if len(envs) > 1:
         envs = ShmemVecEnv(envs, context='fork')
     else:
@@ -75,6 +53,37 @@ def make_vec_envs(env_name, num_envs, seed=1, num_frame_stack=1):
 
     envs = VecFrameStack(envs, num_frame_stack)
 
+    temp_env = make_env(env_name, seed, 0)()
+    max_episode_steps = temp_env.spec.max_episode_steps
+    del temp_env
+    envs = VecMonitor(envs, max_episode_steps)
+    return envs
+
+
+def make_env_dmcontrol(domain_name, task_name, seed, rank, from_pixels=False):
+    def _thunk():
+        set_random_seed(seed)
+        env = dmc2gym.make(domain_name=domain_name, task_name=task_name, seed=seed+rank, from_pixels=from_pixels, visualize_reward=False)
+        env.seed(seed + rank)
+        env.action_space.seed(seed + rank)
+        return env
+
+    return _thunk
+
+# vec envs for dmcontrol
+def make_vec_envs_dmcontrol(domain_name, task_name, num_envs, seed=1, from_pixels=False, num_frame_stack=1):
+    envs = [make_env_dmcontrol(domain_name, task_name, seed, i, from_pixels) for i in range(num_envs)]
+
+    if len(envs) > 1:
+        envs = ShmemVecEnv(envs, context='fork')
+    else:
+        envs = DummyVecEnv(envs)
+
+    envs = VecFrameStack(envs, num_frame_stack)
+    temp_env = make_env_dmcontrol(domain_name, task_name, seed, 0, from_pixels)()
+    max_episode_steps = temp_env.spec.max_episode_steps
+    del temp_env
+    envs = VecMonitor(envs, max_episode_steps)
     return envs
 
 # vec envs for procgen
@@ -89,38 +98,6 @@ def make_vec_envs_procgen(env_name, num_envs, start_level=0, num_levels=0, distr
     env = VecMonitor(env)
     env = VecNormalize(env, obs=normalize_obs, ret=normalize_ret)
     return env
-
-# vec envs based on openai gym
-def make_vec_envs_dmcontrol(domain_name, task_name, num_envs, seed=1, from_pixels=False, num_frame_stack=1):
-    envs = [make_env_dmcontrol(domain_name, task_name, seed, i, from_pixels) for i in range(num_envs)]
-
-    if len(envs) > 1:
-        envs = ShmemVecEnv(envs, context='fork')
-    else:
-        envs = DummyVecEnv(envs)
-
-    envs = VecFrameStack(envs, num_frame_stack)
-
-    return envs
-
-
-class OriginalReturnWrapper(gym.Wrapper):
-    def __init__(self, env):
-        gym.Wrapper.__init__(self, env)
-        self.total_rewards = 0
-
-    def step(self, action):
-        obs, reward, done, info = self.env.step(action)
-        self.total_rewards += reward
-        if done:
-            info['episodic_return'] = self.total_rewards
-            self.total_rewards = 0
-        else:
-            info['episodic_return'] = None
-        return obs, reward, done, info
-
-    def reset(self):
-        return self.env.reset()
 
 
 class TransposeImage(gym.ObservationWrapper):
@@ -190,10 +167,11 @@ class VecExtractDictTransposedObs(VecEnvObservationWrapper):
 
 
 class VecMonitor(VecEnvWrapper):
-    def __init__(self, venv):
+    def __init__(self, venv, max_episode_steps=float('inf')):
         VecEnvWrapper.__init__(self, venv)
         self.episodic_rets = None
         self.episodic_lens = None
+        self.max_episode_steps = max_episode_steps
 
     def reset(self):
         obs = self.venv.reset()

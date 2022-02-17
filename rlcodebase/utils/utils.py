@@ -5,6 +5,12 @@ from gym.spaces.box import Box
 from gym.spaces.discrete import Discrete
 
 
+def update_maxstep_done(info, done, max_episode_steps):
+    for i in range(len(info)):
+        if done[i] and info[i]['eplsodic_len'] >= max_episode_steps:
+            done[i] = False
+    return done
+
 def to_tensor(x, device):
     if isinstance(x, torch.Tensor):
         return x.type(torch.float).to(device)

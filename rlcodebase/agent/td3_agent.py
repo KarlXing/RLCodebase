@@ -5,7 +5,7 @@ import numpy as np
 
 from .base_agent import BaseAgent
 from ..memory import Replay 
-from ..utils import to_numpy, to_tensor, convert_2dindex
+from ..utils import to_numpy, to_tensor, convert_2dindex, update_maxstep_done
 from ..policy import TD3Policy
 
 
@@ -38,6 +38,7 @@ class TD3Agent(BaseAgent):
                 action += np.random.normal(0, self.config.action_noise, action.shape)
                 action = np.clip(action, self.action_limit['low'], self.action_limit['high'])
         next_state, rwd, done, info = self.env.step(action)
+        done = update_maxstep_done(info, done, self.env.max_episode_steps)
         self.storage.add({'s': to_tensor(self.state, self.config.memory_device),
                           'a': to_tensor(action, self.config.memory_device),
                           'r': to_tensor(rwd, self.config.memory_device),
