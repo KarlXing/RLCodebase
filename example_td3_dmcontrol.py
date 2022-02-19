@@ -47,8 +47,8 @@ def main():
     print(config)
 
     # prepare env, model and logger
-    env = make_vec_envs_dmcontrol(config.task_name, config.domain_name, num_envs = config.num_envs, seed = config.seed, from_pixels=config.from_pixels)
-    eval_env = make_vec_envs_dmcontrol(config.task_name, config.domain_name, num_envs = 1, seed = config.seed, from_pixels=config.from_pixels)
+    env = make_vec_envs_dmcontrol(config.task_name, config.domain_name, num_envs = config.num_envs, seed = config.seed)
+    eval_env = make_vec_envs_dmcontrol(config.task_name, config.domain_name, num_envs = 1, seed = config.seed)
     model = ConDetADCLinearNet(input_dim = env.observation_space.shape[0], action_dim = get_action_dim(env.action_space)).to(config.device)
     target_model = ConDetADCLinearNet(input_dim = env.observation_space.shape[0], action_dim = get_action_dim(env.action_space)).to(config.device)
     logger =  Logger(SummaryWriter(config.save_path), config.num_echo_episodes)

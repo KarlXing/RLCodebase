@@ -18,7 +18,7 @@ from ..utils import *
 
 
 
-def make_env(env_id, seed, rank, custom_wrapper=None):
+def make_env(env_id, seed, rank, action_repeat_freq=1, rwd_delay=1):
     def _thunk():
         set_random_seed(seed)
         env = gym.make(env_id)
@@ -32,8 +32,8 @@ def make_env(env_id, seed, rank, custom_wrapper=None):
         if is_atari:
             env = wrap_deepmind(env)
 
-        if custom_wrapper:
-            env = custom_wrapper(env)
+        env = ActionRepeatWrapper(env, action_repeat_freq)
+        env = RewardDelayWrapper(env, rwd_delay)
 
         obs_shape = env.observation_space.shape
         if len(obs_shape) == 3:
@@ -44,8 +44,8 @@ def make_env(env_id, seed, rank, custom_wrapper=None):
     return _thunk
 
 # vec envs based on openai gym
-def make_vec_envs(env_name, num_envs, seed=1, num_frame_stack=1):
-    envs = [make_env(env_name, seed, i) for i in range(num_envs)]
+def make_vec_envs(env_name, num_envs, seed=1, num_frame_stack=1, action_repeat_freq=1, rwd_delay=1):
+    envs = [make_env(env_name, seed, i, action_repeat_freq, rwd_delay) for i in range(num_envs)]
     if len(envs) > 1:
         envs = ShmemVecEnv(envs, context='fork')
     else:
@@ -54,16 +54,19 @@ def make_vec_envs(env_name, num_envs, seed=1, num_frame_stack=1):
     envs = VecFrameStack(envs, num_frame_stack)
 
     temp_env = make_env(env_name, seed, 0)()
-    max_episode_steps = temp_env.spec.max_episode_steps
+    max_episode_steps = (temp_env.spec.max_episode_steps + action_repeat_freq - 1) // action_repeat_freq
     del temp_env
     envs = VecMonitor(envs, max_episode_steps)
     return envs
 
 
-def make_env_dmcontrol(domain_name, task_name, seed, rank, from_pixels=False):
+def make_env_dmcontrol(domain_name, task_name, seed, rank, from_pixels=False, action_repeat_freq=1, rwd_delay=1):
     def _thunk():
         set_random_seed(seed)
-        env = dmc2gym.make(domain_name=domain_name, task_name=task_name, seed=seed+rank, from_pixels=from_pixels, visualize_reward=False)
+        env = dmc2gym.make(domain_name=domain_name, task_name=task_name, seed=seed+rank, from_pixels=from_pixels, visualize_reward=False, frame_skip=action_repeat_freq)
+
+        env = RewardDelayWrapper(env, rwd_delay)
+
         env.seed(seed + rank)
         env.action_space.seed(seed + rank)
         return env
@@ -71,8 +74,8 @@ def make_env_dmcontrol(domain_name, task_name, seed, rank, from_pixels=False):
     return _thunk
 
 # vec envs for dmcontrol
-def make_vec_envs_dmcontrol(domain_name, task_name, num_envs, seed=1, from_pixels=False, num_frame_stack=1):
-    envs = [make_env_dmcontrol(domain_name, task_name, seed, i, from_pixels) for i in range(num_envs)]
+def make_vec_envs_dmcontrol(domain_name, task_name, num_envs, seed=1, from_pixels=False, num_frame_stack=1, action_repeat_freq=1, rwd_delay=1):
+    envs = [make_env_dmcontrol(domain_name, task_name, seed, i, from_pixels, action_repeat_freq, rwd_delay) for i in range(num_envs)]
 
     if len(envs) > 1:
         envs = ShmemVecEnv(envs, context='fork')
@@ -80,7 +83,7 @@ def make_vec_envs_dmcontrol(domain_name, task_name, num_envs, seed=1, from_pixel
         envs = DummyVecEnv(envs)
 
     envs = VecFrameStack(envs, num_frame_stack)
-    temp_env = make_env_dmcontrol(domain_name, task_name, seed, 0, from_pixels)()
+    temp_env = make_env_dmcontrol(domain_name, task_name, seed, 0, from_pixels, action_repeat_freq, rwd_delay)()
     max_episode_steps = temp_env.spec.max_episode_steps
     del temp_env
     envs = VecMonitor(envs, max_episode_steps)
@@ -98,6 +101,48 @@ def make_vec_envs_procgen(env_name, num_envs, start_level=0, num_levels=0, distr
     env = VecMonitor(env)
     env = VecNormalize(env, obs=normalize_obs, ret=normalize_ret)
     return env
+
+
+class ActionRepeatWrapper(gym.Wrapper):
+    def __init__(self, env, action_repeat_freq=1):
+        gym.Wrapper.__init__(self, env)
+        self.action_repeat_freq = action_repeat_freq
+
+    def step(self, action):
+        action_repeat_rwd = 0
+        for _ in range(self.action_repeat_freq):
+            obs, reward, done, info = self.env.step(action)
+            action_repeat_rwd += reward
+            if done:
+                break
+        reward = action_repeat_rwd
+        return obs, reward, done, info
+
+    def reset(self):
+        return self.env.reset()
+
+class RewardDelayWrapper(gym.Wrapper):
+    def __init__(self, env, rwd_delay=1):
+        gym.Wrapper.__init__(self, env)
+        self.rwd_delay = rwd_delay
+        self.rwd_step = 0
+        self.rwd_sum = 0
+
+    def step(self, action):
+        obs, reward, done, info = self.env.step(action)
+
+        self.rwd_step = (self.rwd_step + 1) % self.rwd_delay
+        if self.rwd_step == 0 or done:
+            reward += self.rwd_sum
+            self.rwd_sum = 0
+        else:
+            self.rwd_sum += reward
+            reward = 0
+        
+        return obs, reward, done, info
+
+    def reset(self):
+        return self.env.reset()
 
 
 class TransposeImage(gym.ObservationWrapper):
