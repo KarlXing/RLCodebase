@@ -1,71 +1,46 @@
 import torch
-import os
-
+import torch.nn as nn
 from .base_agent import BaseAgent
-from ..memory import Rollout
-from ..utils.utils import to_tensor, convert_2dindex, update_maxstep_done
-from ..policy.a2c_policy import A2CPolicy
 
 
 class A2CAgent(BaseAgent):
-    def __init__(self, config, env, model, logger):
-        super().__init__(config)
-        self.policy = A2CPolicy(model,
-                                config.optimizer,
-                                config.lr,
-                                config.value_loss_coef,
-                                config.entropy_coef,
-                                config.use_grad_clip,
-                                config.max_grad_norm)
-        self.env = env
-        self.state = to_tensor(env.reset(), config.device)
-        self.logger = logger
-        self.storage = Rollout(config.rollout_length, config.num_envs, env.observation_space, env.action_space, config.memory_device)
-        self.sample_keys = ['s', 'a', 'ret', 'adv']
-        self.rollout_filled = 0
+    def __init__(self, model,
+                       optimizer,
+                       lr,
+                       value_loss_coef,
+                       entropy_coef, 
+                       use_grad_clip=False, 
+                       max_grad_norm=None):
+        super().__init__()
+        self.model = model
+        if optimizer == 'RMSprop':
+            self.optimizer = torch.optim.RMSprop(model.parameters(), lr=lr)
+        elif optimizer == 'Adam':
+            self.optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+        else:
+            raise NotImplementedError("Only RMSprop and Adam are supported. Please implement here for other optimizers.")
 
-    def step(self):
-        with torch.no_grad():
-            action, log_prob, v, ent = self.policy.inference(self.state)
-        next_state, rwd, done, info = self.env.step(action.cpu().numpy())
-        done = update_maxstep_done(info, done, self.env.max_episode_steps)
-        self.rollout_filled += 1
-        self.storage.add({'a': action,
-                          'v': v, 
-                          'r': to_tensor(rwd, self.config.memory_device),
-                          'd': to_tensor(done, self.config.memory_device),
-                          's': self.state})
-        self.logger.save_episodic_return(info, self.done_steps)
+        self.value_loss_coef = value_loss_coef
+        self.entropy_coef = entropy_coef
+        self.use_grad_clip = use_grad_clip
+        self.max_grad_norm = max_grad_norm
 
-        self.state = to_tensor(next_state, self.config.device)
+    def inference(self, obs):
+        action, action_log_prob, value, entropy = self.model(obs)
+        return action, action_log_prob, value, entropy
 
-        if self.rollout_filled == self.config.rollout_length:
-            with torch.no_grad():
-                _, _, v, _ = self.policy.inference(self.state)
-            self.storage.compute_return(v.to(self.config.memory_device), self.config.discount, self.config.use_gae, self.config.gae_lambda)
+    def learn_on_batch(self, batch):
+        state, action, returns, advantages = batch['s'], batch['a'], batch['ret'], batch['adv']
 
-            indices = list(range(self.config.rollout_length*self.config.num_envs))
-            batch = self.sample(indices)
-            loss = self.policy.learn_on_batch(batch)
-            self.logger.add_scalar(['action_loss', 'value_loss', 'entropy'], loss, self.done_steps)
+        _, log_prob, values, entropy = self.model(state, action)
+        action_loss = -(log_prob * advantages).mean()
+        value_loss = 0.5 * (returns - values).pow(2).mean()
+        loss = action_loss + self.value_loss_coef * value_loss - self.entropy_coef * entropy.mean()
 
-            self.rollout_filled = 0
-            self.storage.reset()
+        self.optimizer.zero_grad()
+        loss.backward()
+        if self.use_grad_clip:
+            nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
+        self.optimizer.step()
 
-    def save(self):
-        torch.save(self.policy.model.state_dict(), os.path.join(self.config.save_path, '%d-model.pt' % self.done_steps))
-
-    def sample(self, indices):
-        i1, i2 = convert_2dindex(indices, self.config.num_envs)
-        batch = {}
-        for k in self.sample_keys:
-            batch[k] = getattr(self.storage, k)[i1, i2].to(self.config.device)
-        return batch
-
-
-
-
-
-
-
-
+        return action_loss.item(), value_loss.item(), entropy.mean().item()

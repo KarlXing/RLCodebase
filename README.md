@@ -43,7 +43,7 @@ pip install -e .
 pip install -r requirements.txt
 
 # try it
-python example_a2c.py
+python examples/example_ppo.py
 ````
 
 ## Supported Algorithms
