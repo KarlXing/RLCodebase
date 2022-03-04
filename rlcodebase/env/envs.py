@@ -64,7 +64,7 @@ def make_vec_envs(env_name, num_envs, seed=1, num_frame_stack=1, action_repeat_f
 def make_env_dmcontrol(domain_name, task_name, seed, rank, from_pixels=False, height=84, width=84, action_repeat_freq=1, rwd_delay=1):
     def _thunk():
         set_random_seed(seed)
-        env = dmc2gym.make(domain_name=domain_name, task_name=task_name, seed=seed+rank, from_pixels=from_pixels, visualize_reward=False, frame_skip=action_repeat_freq)
+        env = dmc2gym.make(domain_name=domain_name, task_name=task_name, seed=seed+rank, from_pixels=from_pixels, height=height, width=width, visualize_reward=False, frame_skip=action_repeat_freq)
 
         env = RewardDelayWrapper(env, rwd_delay)
         env = OriginalReturnWrapper(env)
