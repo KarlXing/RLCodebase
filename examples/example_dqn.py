@@ -1,6 +1,6 @@
 import rlcodebase
 from rlcodebase.env import make_vec_envs
-from rlcodebase.agent import DQNAgent
+from rlcodebase.trainer import DQNTrainer
 from rlcodebase.utils import get_action_dim, init_parser, Config, Logger
 from rlcodebase.model import CatQConvNet
 from torch.utils.tensorboard import SummaryWriter
@@ -54,9 +54,9 @@ def main():
     target_model = CatQConvNet(input_channels = env.observation_space.shape[0], action_dim = get_action_dim(env.action_space)).to(config.device)
     logger =  Logger(SummaryWriter(config.save_path), config.num_echo_episodes, config.log_episodes_avg_window)
 
-    # create agent and run
-    agent = DQNAgent(config, env, eval_env, model, target_model, logger)
-    agent.run()
+    # create trainer and run
+    trainer = DQNTrainer(config, env, eval_env, model, target_model, logger)
+    trainer.run()
 
 if __name__ == '__main__':
     main()

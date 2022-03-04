@@ -1,6 +1,6 @@
 import rlcodebase
 from rlcodebase.env import make_vec_envs_procgen
-from rlcodebase.agent import PPOAgent
+from rlcodebase.trainer import PPOTrainer
 from rlcodebase.utils import get_action_dim, init_parser, Config, Logger
 from rlcodebase.model import ImpalaCNN, SeparateImpalaCNN
 from torch.utils.tensorboard import SummaryWriter
@@ -62,9 +62,9 @@ def main():
     model = Model(input_channels = env.observation_space.shape[0], action_dim = get_action_dim(env.action_space)).to(config.device)
     logger =  Logger(SummaryWriter(config.save_path), config.num_echo_episodes)
 
-    # create agent and run
-    agent = PPOAgent(config, env, model, logger)
-    agent.run()
+    # create trainer and run
+    trainer = PPOTrainer(config, env, model, logger)
+    trainer.run()
 
 if __name__ == '__main__':
     main()

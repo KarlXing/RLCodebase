@@ -1,7 +1,7 @@
 from ast import arg
 import rlcodebase
 from rlcodebase.env import make_vec_envs_dmcontrol
-from rlcodebase.agent import TD3Agent
+from rlcodebase.trainer import TD3Trainer
 from rlcodebase.utils import get_action_dim, init_parser, Config, Logger
 from rlcodebase.model import ConDetADCLinearNet
 from torch.utils.tensorboard import SummaryWriter
@@ -53,9 +53,9 @@ def main():
     target_model = ConDetADCLinearNet(input_dim = env.observation_space.shape[0], action_dim = get_action_dim(env.action_space)).to(config.device)
     logger =  Logger(SummaryWriter(config.save_path), config.num_echo_episodes)
 
-    # create agent and run
-    agent = TD3Agent(config, env, eval_env, model, target_model, logger)
-    agent.run()
+    # create trainer and run
+    trainer = TD3Trainer(config, env, eval_env, model, target_model, logger)
+    trainer.run()
 
 if __name__ == '__main__':
     main()

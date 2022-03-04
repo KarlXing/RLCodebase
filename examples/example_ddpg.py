@@ -1,8 +1,8 @@
 import rlcodebase
 from rlcodebase.env import make_vec_envs
-from rlcodebase.agent import SACAgent
+from rlcodebase.trainer import DDPGTrainer
 from rlcodebase.utils import get_action_dim, init_parser, Config, Logger
-from rlcodebase.model import ConStoSGADCLinearNet
+from rlcodebase.model import ConDetACLinearNet
 from torch.utils.tensorboard import SummaryWriter
 from argparse import ArgumentParser
 import pybullet_envs
@@ -13,10 +13,10 @@ parser.add_argument('--seed', default=0, type=int)
 args = parser.parse_args()
 
 def main():
-    # create config with basic parameters for sac
+    # create config with basic parameters for ddpg
     config = Config()
     config.game = 'HalfCheetah-v2'
-    config.algo = 'sac'
+    config.algo = 'ddpg'
     config.max_steps = int(1e6)
     config.num_envs = 1
     config.optimizer = 'Adam'
@@ -26,9 +26,8 @@ def main():
     config.replay_batch = 100
     config.replay_on_gpu = True
     config.warmup_steps = 10000
+    config.action_noise = 0.1
     config.soft_update_rate = 0.005
-    config.sac_alpha = 0.2
-    config.automatic_alpha = False
     config.intermediate_eval = True
     config.eval_interval = int(1e4)
     config.use_gpu = True
@@ -44,13 +43,13 @@ def main():
     # prepare env, model and logger
     env = make_vec_envs(config.game, num_envs = config.num_envs, seed = config.seed)
     eval_env = make_vec_envs(config.game, num_envs = 1, seed = config.seed)
-    model = ConStoSGADCLinearNet(input_dim = env.observation_space.shape[0], action_dim = get_action_dim(env.action_space)).to(config.device)
-    target_model = ConStoSGADCLinearNet(input_dim = env.observation_space.shape[0], action_dim = get_action_dim(env.action_space)).to(config.device)
+    model = ConDetACLinearNet(input_dim = env.observation_space.shape[0], action_dim = get_action_dim(env.action_space)).to(config.device)
+    target_model = ConDetACLinearNet(input_dim = env.observation_space.shape[0], action_dim = get_action_dim(env.action_space)).to(config.device)
     logger =  Logger(SummaryWriter(config.save_path), config.num_echo_episodes)
 
-    # create agent and run
-    agent = SACAgent(config, env, eval_env, model, target_model, logger)
-    agent.run()
+    # create trainer and run
+    trainer = DDPGTrainer(config, env, eval_env, model, target_model, logger)
+    trainer.run()
 
 if __name__ == '__main__':
     main()
