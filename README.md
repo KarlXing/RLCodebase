@@ -1,18 +1,19 @@
 # RLCodebase
 RLCodebase is a modularized codebase for deep reinforcement learning algorithms based on PyTorch. This repo aims to provide an user-friendly reinforcement learning codebase for beginners to get started and for researchers to try their ideas quickly and efficiently. 
 
-For now, it has implemented DQN(PER), A2C, PPO, DDPG, TD3 and SAC algorithms, and tested on OpenAI Gym, Procgen, PyBullet and DMControl Suite environments.
+For now, it has implemented DQN(PER), A2C, PPO, DDPG, TD3 and SAC algorithms, and has been tested on Atari, Procgen, Mujoco, PyBullet and DMControl Suite environments.
 
 ## Introduction
 The design of RLCodebase is shown as below. 
 
 
 ![RLCodebase](imgs/RLCodebase.png)
-* Config: Config is a class that contains parameters for reinforcement learning algorithms such as discount factor, learning rate, etc. and general configurations such as random seed, saving path, etc.
-* Agent: Agent is a wrapped class that controls the workflow of reinforcement learning algorithms like a manager. It's responsible for the interactions among submodules (policy, environment, memory). 
-* Policy: Policy tells us what action to taken given a state. It also implements a function that defines how to update the model given a batch of data.
-* Environment: Environment is designed to be a vectorized gym environment. Here we use gym wrappers from OpenAI baselines for convenient implementations. 
-* Memory: Memory stores data needed for improving our model.
+* **Config**: Config is a class that contains parameters for reinforcement learning algorithms such as discount factor, learning rate, etc. and general configurations such as random seed, saving path, etc.
+* **Trainer**: Trainer is a wrapped class that controls the workflow of reinforcement learning training. It manages the interactions between submodules (Agent, Env, memory). 
+* **Agent**: Agent chooses actions to take given states. It also defines how to update the model given a batch of data.
+* **Model**: Model gathers all neural networks to train.
+* **Env**: Env is a vectorized gym environment. 
+* **Memory**: Memory stores experiences utilized for RL training.
 
 ## Installtion
 All required packages have been included in setup.py and requirements.txt. Mujoco is needed for mujoco_py and dm control suite. To support mujoco_py and dm control, please refer to https://github.com/openai/mujoco-py and https://github.com/deepmind/dm_control. For mujoco_py 2.1.2.14 and dm_control (commit fe44496), you may download mujoco like below
@@ -64,7 +65,7 @@ python examples/example_ppo.py
 ### 1. PPO & A2C In Atari Games
 <img src="https://github.com/KarlXing/RLCodebase/blob/master/imgs/A2C&PPO.png">
 
-### 2. DDPG & TD3 & SAC In Pybullet Environments
+### 2. DDPG & TD3 & SAC In PyBullet Environments
 <img src="https://github.com/KarlXing/RLCodebase/blob/master/imgs/DDPG&TD3&SAC.png">
 
 ### 3. DQN & DQN+PER In PongNoFrameskip-v4
