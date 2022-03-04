@@ -60,10 +60,10 @@ def make_vec_envs(env_name, num_envs, seed=1, num_frame_stack=1, action_repeat_f
     return envs
 
 
-def make_env_dmcontrol(domain_name, task_name, seed, rank, from_pixels=False, action_repeat_freq=1, rwd_delay=1):
+def make_env_dmcontrol(domain_name, task_name, seed, rank, from_pixels=False, action_repeat_freq=1, rwd_delay=1, height=84, width=84):
     def _thunk():
         set_random_seed(seed)
-        env = dmc2gym.make(domain_name=domain_name, task_name=task_name, seed=seed+rank, from_pixels=from_pixels, visualize_reward=False, frame_skip=action_repeat_freq)
+        env = dmc2gym.make(domain_name=domain_name, task_name=task_name, seed=seed+rank, from_pixels=from_pixels, height=84, width=84, visualize_reward=False, frame_skip=action_repeat_freq)
 
         env = RewardDelayWrapper(env, rwd_delay)
 
@@ -74,8 +74,8 @@ def make_env_dmcontrol(domain_name, task_name, seed, rank, from_pixels=False, ac
     return _thunk
 
 # vec envs for dmcontrol
-def make_vec_envs_dmcontrol(domain_name, task_name, num_envs, seed=1, from_pixels=False, num_frame_stack=1, action_repeat_freq=1, rwd_delay=1):
-    envs = [make_env_dmcontrol(domain_name, task_name, seed, i, from_pixels, action_repeat_freq, rwd_delay) for i in range(num_envs)]
+def make_vec_envs_dmcontrol(domain_name, task_name, num_envs, seed=1, from_pixels=False, num_frame_stack=1, action_repeat_freq=1, rwd_delay=1, height=84, width=84):
+    envs = [make_env_dmcontrol(domain_name, task_name, seed, i, from_pixels, action_repeat_freq, rwd_delay, height, width) for i in range(num_envs)]
 
     if len(envs) > 1:
         envs = ShmemVecEnv(envs, context='fork')
@@ -83,7 +83,7 @@ def make_vec_envs_dmcontrol(domain_name, task_name, num_envs, seed=1, from_pixel
         envs = DummyVecEnv(envs)
 
     envs = VecFrameStack(envs, num_frame_stack)
-    temp_env = make_env_dmcontrol(domain_name, task_name, seed, 0, from_pixels, action_repeat_freq, rwd_delay)()
+    temp_env = make_env_dmcontrol(domain_name, task_name, seed, 0, from_pixels, action_repeat_freq, rwd_delay, height, width)()
     max_episode_steps = temp_env.spec.max_episode_steps
     del temp_env
     envs = VecMonitor(envs, max_episode_steps)
