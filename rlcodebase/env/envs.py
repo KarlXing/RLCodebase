@@ -44,6 +44,7 @@ def make_env(env_id, seed, rank, action_repeat_freq=1, rwd_delay=1):
 
     return _thunk
 
+  
 # vec envs based on openai gym
 def make_vec_envs(env_name, num_envs, seed=1, num_frame_stack=1, action_repeat_freq=1, rwd_delay=1):
     envs = [make_env(env_name, seed, i, action_repeat_freq, rwd_delay) for i in range(num_envs)]
@@ -64,7 +65,7 @@ def make_vec_envs(env_name, num_envs, seed=1, num_frame_stack=1, action_repeat_f
 def make_env_dmcontrol(domain_name, task_name, seed, rank, from_pixels=False, height=84, width=84, action_repeat_freq=1, rwd_delay=1):
     def _thunk():
         set_random_seed(seed)
-        env = dmc2gym.make(domain_name=domain_name, task_name=task_name, seed=seed+rank, from_pixels=from_pixels, visualize_reward=False, frame_skip=action_repeat_freq)
+        env = dmc2gym.make(domain_name=domain_name, task_name=task_name, seed=seed+rank, from_pixels=from_pixels, height=84, width=84, visualize_reward=False, frame_skip=action_repeat_freq)
 
         env = RewardDelayWrapper(env, rwd_delay)
         env = OriginalReturnWrapper(env)
@@ -75,6 +76,7 @@ def make_env_dmcontrol(domain_name, task_name, seed, rank, from_pixels=False, he
 
     return _thunk
 
+  
 # vec envs for dmcontrol
 def make_vec_envs_dmcontrol(domain_name, task_name, num_envs, seed=1, from_pixels=False, height=84, width=84, num_frame_stack=1, action_repeat_freq=1, rwd_delay=1):
     envs = [make_env_dmcontrol(domain_name, task_name, seed, i, from_pixels, height, width, action_repeat_freq, rwd_delay) for i in range(num_envs)]
@@ -85,12 +87,14 @@ def make_vec_envs_dmcontrol(domain_name, task_name, num_envs, seed=1, from_pixel
         envs = DummyVecEnv(envs)
 
     envs = VecFrameStack(envs, num_frame_stack)
+
     temp_env = make_env_dmcontrol(domain_name, task_name, seed, 0, from_pixels, height, width, action_repeat_freq, rwd_delay)()
     max_episode_steps = temp_env.spec.max_episode_steps
     del temp_env
     envs = VecMonitor(envs, max_episode_steps)
     return envs
 
+  
 # vec envs for procgen
 def make_vec_envs_procgen(env_name, num_envs, start_level=0, num_levels=0, distribution_mode='hard', normalize_obs=False, normalize_ret=True, num_frame_stack=1):
     env = ProcgenEnv(num_envs=num_envs,
@@ -104,6 +108,7 @@ def make_vec_envs_procgen(env_name, num_envs, start_level=0, num_levels=0, distr
     env = VecNormalize(env, obs=normalize_obs, ret=normalize_ret)
     return env
 
+  
 class OriginalReturnWrapper(gym.Wrapper):
     def __init__(self, env):
         gym.Wrapper.__init__(self, env)
@@ -141,6 +146,7 @@ class ActionRepeatWrapper(gym.Wrapper):
     def reset(self):
         return self.env.reset()
 
+      
 class RewardDelayWrapper(gym.Wrapper):
     def __init__(self, env, rwd_delay=1):
         gym.Wrapper.__init__(self, env)
