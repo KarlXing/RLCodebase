@@ -252,14 +252,17 @@ class VecMonitor(VecEnvWrapper):
         for i in range(len(dones)):
             if dones[i]:
                 info = infos[i]
-                info['episodic_return'] = self.episodic_rets[i]
-                info['eplsodic_len'] = self.episodic_lens[i]
-
+                # OriginalReturnWrapper has contained episodic_return info; Procgen envs need to add this info
+                if 'episodic_return' not in info: 
+                    info['episodic_return'] = self.episodic_rets[i]
                 self.episodic_rets[i] = 0
+
+                info['eplsodic_len'] = self.episodic_lens[i]
                 self.episodic_lens[i] = 0
             else:
                 info = infos[i]
-                info['episodic_return'] = None
+                if 'episodic_return' not in info:
+                    info['episodic_return'] = None
                 info['eplsodic_len'] = None
 
         return obs, rews, dones, infos
